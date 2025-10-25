@@ -1,0 +1,28 @@
+type Expense {
+  expenseId: ID!
+  userId: ID!
+  amountMinor: Int!
+  currency: String!
+  category: String!
+  note: String
+  occurredAt: String!
+  monthKey: String!
+  createdAt: String!
+}
+
+input CreateExpenseInput {
+  userId: ID!
+  amountMinor: Int!
+  currency: String!
+  category: String!
+  note: String
+  occurredAt: String!
+}
+
+type Query {
+  expensesByMonth(userId: ID!, month: String!): [Expense!]!
+}
+
+type Mutation {
+  createExpense(input: CreateExpenseInput!): Expense!
+}

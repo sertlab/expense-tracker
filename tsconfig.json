@@ -2,5 +2,27 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./apps/web-e2e"
+    },
+    {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./libs/db"
+    },
+    {
+      "path": "./libs/contracts"
+    },
+    {
+      "path": "./libs/auth"
+    },
+    {
+      "path": "./libs/validation"
+    },
+    {
+      "path": "./libs/util"
+    }
+  ]
 }
