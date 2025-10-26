@@ -1,7 +1,9 @@
-import { handlerPath } from '../lib/handler-resolver';
+import type { AWS } from '@serverless/typescript';
 
-export default {
+const updateUserProfile: AWS['functions'] = {
   updateUserProfile: {
-    handler: `${handlerPath(__dirname)}/update-user-profile/handler.handler`,
+    handler: 'src/functions/update-user-profile/index.main',
   },
 };
+
+export default updateUserProfile;

@@ -1,7 +1,9 @@
-import { handlerPath } from '../lib/handler-resolver';
+import type { AWS } from '@serverless/typescript';
 
-export default {
+const getUserProfile: AWS['functions'] = {
   getUserProfile: {
-    handler: `${handlerPath(__dirname)}/get-user-profile/handler.handler`,
+    handler: 'src/functions/get-user-profile/index.main',
   },
 };
+
+export default getUserProfile;
