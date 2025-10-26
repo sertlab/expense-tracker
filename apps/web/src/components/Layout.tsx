@@ -35,22 +35,23 @@ export default function Layout() {
 
         <div>
           {signedIn ? (
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <span style={{ color: '#aaa' }}>Signed in</span>
+            <span style={{ color: 'white' }}>
+              Signed in •{' '}
               <button
                 onClick={signOut}
                 style={{
-                  padding: '0.5rem 1rem',
                   backgroundColor: 'transparent',
                   color: 'white',
-                  border: '1px solid white',
-                  borderRadius: '4px',
+                  border: 'none',
                   cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: 0,
+                  fontSize: 'inherit',
                 }}
               >
                 Sign out
               </button>
-            </div>
+            </span>
           ) : (
             <Link
               to="/login"

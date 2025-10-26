@@ -8,12 +8,6 @@ const ID_TOKEN_KEY = 'id_token';
  * Build Cognito Hosted UI login URL with implicit flow
  */
 export function buildLoginUrl(): string {
-  console.log('Environment variables:', {
-    COGNITO_DOMAIN,
-    CLIENT_ID,
-    REDIRECT_URI,
-  });
-
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     response_type: 'token',
@@ -21,10 +15,7 @@ export function buildLoginUrl(): string {
     redirect_uri: REDIRECT_URI,
   });
 
-  const url = `${COGNITO_DOMAIN}/login?${params.toString()}`;
-  console.log('Generated login URL:', url);
-
-  return url;
+  return `${COGNITO_DOMAIN}/login?${params.toString()}`;
 }
 
 /**
