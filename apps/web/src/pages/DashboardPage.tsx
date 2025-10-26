@@ -106,6 +106,8 @@ export default function DashboardPage() {
     );
   }
 
+  const userId = getUserId();
+
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Dashboard</h1>
@@ -116,6 +118,9 @@ export default function DashboardPage() {
         </h2>
         <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
           Total: {formatAmount(monthlyTotal)}
+        </p>
+        <p style={{ fontSize: '0.875rem', color: '#666' }}>
+          User ID: {userId}
         </p>
       </div>
 
