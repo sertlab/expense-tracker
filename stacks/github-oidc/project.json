@@ -6,17 +6,11 @@
   "targets": {
     "deploy": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "npx serverless deploy --verbose",
-        "cwd": "stacks/github-oidc"
-      }
+      "options": { "cwd": "stacks/github-oidc", "command": "serverless deploy --verbose" }
     },
     "remove": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "npx serverless remove --verbose",
-        "cwd": "stacks/github-oidc"
-      }
+      "options": { "cwd": "stacks/github-oidc", "command": "serverless remove --verbose" }
     }
   }
 }

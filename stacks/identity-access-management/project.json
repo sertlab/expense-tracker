@@ -6,46 +6,15 @@
   "targets": {
     "deploy": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless deploy --stage dev",
-        "cwd": "stacks/identity-access-management"
-      },
-      "configurations": {
-        "dev": {
-          "command": "serverless deploy --stage dev"
-        },
-        "staging": {
-          "command": "serverless deploy --stage staging"
-        },
-        "prod": {
-          "command": "serverless deploy --stage prod"
-        }
-      }
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless deploy" }
     },
     "remove": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless remove --stage dev",
-        "cwd": "stacks/identity-access-management"
-      },
-      "configurations": {
-        "dev": {
-          "command": "serverless remove --stage dev"
-        },
-        "staging": {
-          "command": "serverless remove --stage staging"
-        },
-        "prod": {
-          "command": "serverless remove --stage prod"
-        }
-      }
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless remove" }
     },
     "info": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless info --stage dev",
-        "cwd": "stacks/identity-access-management"
-      }
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless info" }
     }
   },
   "tags": ["stack", "iam", "cognito", "auth"]

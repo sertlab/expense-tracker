@@ -6,54 +6,16 @@
   "targets": {
     "deploy": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless deploy --stage dev",
-        "cwd": "stacks/app-graphql-api"
-      },
-      "configurations": {
-        "dev": {
-          "command": "serverless deploy --stage dev"
-        },
-        "staging": {
-          "command": "serverless deploy --stage staging"
-        },
-        "prod": {
-          "command": "serverless deploy --stage prod"
-        }
-      }
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless deploy" }
     },
     "remove": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless remove --stage dev",
-        "cwd": "stacks/app-graphql-api"
-      },
-      "configurations": {
-        "dev": {
-          "command": "serverless remove --stage dev"
-        },
-        "staging": {
-          "command": "serverless remove --stage staging"
-        },
-        "prod": {
-          "command": "serverless remove --stage prod"
-        }
-      }
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless remove" }
     },
     "info": {
       "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless info --stage dev",
-        "cwd": "stacks/app-graphql-api"
-      }
-    },
-    "logs": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "serverless logs --function createExpense --stage dev",
-        "cwd": "stacks/app-graphql-api"
-      }
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless info" }
     }
   },
-  "tags": ["stack", "api", "graphql"]
+  "tags": ["stack", "api", "graphql", "appsync"]
 }
