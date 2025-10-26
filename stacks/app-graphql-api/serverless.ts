@@ -3,6 +3,7 @@ import createExpense from './functions/createExpense';
 import listExpensesByMonth from './functions/listExpensesByMonth';
 import getUserProfile from './functions/getUserProfile';
 import updateUserProfile from './functions/updateUserProfile';
+import deleteExpense from './functions/deleteExpense';
 import resources from './resources';
 import iamRoleStatements from './iam/permissions';
 
@@ -32,6 +33,7 @@ const config: AWS = {
     ...listExpensesByMonth,
     ...getUserProfile,
     ...updateUserProfile,
+    ...deleteExpense,
   },
 
   package: {

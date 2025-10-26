@@ -168,6 +168,9 @@ const resources: AWS['resources'] = {
                     {
                       'Fn::GetAtt': ['UpdateUserProfileLambdaFunction', 'Arn'],
                     },
+                    {
+                      'Fn::GetAtt': ['DeleteExpenseLambdaFunction', 'Arn'],
+                    },
                   ],
                 },
               ],
@@ -317,6 +320,42 @@ const resources: AWS['resources'] = {
         FieldName: 'updateUserProfile',
         DataSourceName: {
           'Fn::GetAtt': ['UpdateUserProfileDataSource', 'Name'],
+        },
+      },
+    },
+
+    // Data Source for deleteExpense Lambda
+    DeleteExpenseDataSource: {
+      Type: 'AWS::AppSync::DataSource',
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        Name: 'DeleteExpenseDataSource',
+        Type: 'AWS_LAMBDA',
+        ServiceRoleArn: {
+          'Fn::GetAtt': ['AppSyncLambdaRole', 'Arn'],
+        },
+        LambdaConfig: {
+          LambdaFunctionArn: {
+            'Fn::GetAtt': ['DeleteExpenseLambdaFunction', 'Arn'],
+          },
+        },
+      },
+    },
+
+    // Resolver for Mutation.deleteExpense
+    DeleteExpenseResolver: {
+      Type: 'AWS::AppSync::Resolver',
+      DependsOn: ['GraphQLSchema'],
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        TypeName: 'Mutation',
+        FieldName: 'deleteExpense',
+        DataSourceName: {
+          'Fn::GetAtt': ['DeleteExpenseDataSource', 'Name'],
         },
       },
     },

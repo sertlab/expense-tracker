@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react';
 import { request } from '../api/graphql';
 import { getUserId } from '../auth/cognito';
 
+interface User {
+  userId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  address?: string;
+  phone?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Expense {
   expenseId: string;
   userId: string;
@@ -12,6 +24,7 @@ interface Expense {
   occurredAt: string;
   monthKey: string;
   createdAt: string;
+  user?: User;
 }
 
 const EXPENSES_BY_MONTH_QUERY = `
@@ -26,7 +39,19 @@ const EXPENSES_BY_MONTH_QUERY = `
       occurredAt
       monthKey
       createdAt
+      user {
+        userId
+        email
+        firstName
+        lastName
+      }
     }
+  }
+`;
+
+const DELETE_EXPENSE_MUTATION = `
+  mutation DeleteExpense($input: DeleteExpenseInput!) {
+    deleteExpense(input: $input)
   }
 `;
 
@@ -34,6 +59,7 @@ export default function DashboardPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -69,6 +95,20 @@ export default function DashboardPage() {
     fetchExpenses();
   }, []);
 
+  // Calculate totals per user
+  const userTotals = expenses.reduce((acc, expense) => {
+    const key = expense.userId;
+    if (!acc[key]) {
+      acc[key] = {
+        userId: expense.userId,
+        user: expense.user,
+        total: 0,
+      };
+    }
+    acc[key].total += expense.amountMinor;
+    return acc;
+  }, {} as Record<string, { userId: string; user?: User; total: number }>);
+
   // Calculate monthly total
   const monthlyTotal = expenses.reduce((sum, expense) => sum + expense.amountMinor, 0);
 
@@ -86,6 +126,42 @@ export default function DashboardPage() {
       month: '2-digit',
       year: 'numeric',
     });
+  };
+
+  // Format user name
+  const formatUserName = (user?: User) => {
+    if (!user) return 'Unknown';
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user.firstName) return user.firstName;
+    if (user.lastName) return user.lastName;
+    return user.email;
+  };
+
+  // Handle delete
+  const handleDelete = async (expenseId: string) => {
+    const userId = getUserId();
+    if (!userId) return;
+
+    if (!confirm('Are you sure you want to delete this expense?')) {
+      return;
+    }
+
+    setDeletingId(expenseId);
+    try {
+      await request(DELETE_EXPENSE_MUTATION, {
+        input: { userId, expenseId },
+      });
+
+      // Remove from local state
+      setExpenses((prev) => prev.filter((e) => e.expenseId !== expenseId));
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+      alert(`Failed to delete expense: ${(err as Error).message}`);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (loading) {
@@ -124,6 +200,33 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {Object.keys(userTotals).length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <h3>Totals by User</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {Object.values(userTotals).map(({ userId, user, total }) => (
+              <div
+                key={userId}
+                style={{
+                  padding: '0.75rem',
+                  backgroundColor: 'white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span style={{ fontWeight: 'bold' }}>{formatUserName(user)}</span>
+                <span style={{ fontSize: '1.125rem', color: '#333' }}>
+                  {formatAmount(total)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {expenses.length === 0 ? (
         <p>No expenses for this month.</p>
       ) : (
@@ -154,6 +257,15 @@ export default function DashboardPage() {
                     borderBottom: '2px solid #ddd',
                   }}
                 >
+                  User
+                </th>
+                <th
+                  style={{
+                    padding: '0.75rem',
+                    textAlign: 'left',
+                    borderBottom: '2px solid #ddd',
+                  }}
+                >
                   Category
                 </th>
                 <th
@@ -174,6 +286,15 @@ export default function DashboardPage() {
                 >
                   Amount
                 </th>
+                <th
+                  style={{
+                    padding: '0.75rem',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #ddd',
+                  }}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -185,6 +306,7 @@ export default function DashboardPage() {
                   <td style={{ padding: '0.75rem' }}>
                     {formatDate(expense.occurredAt)}
                   </td>
+                  <td style={{ padding: '0.75rem' }}>{formatUserName(expense.user)}</td>
                   <td style={{ padding: '0.75rem' }}>{expense.category}</td>
                   <td style={{ padding: '0.75rem', color: '#666' }}>
                     {expense.note || '-'}
@@ -197,6 +319,23 @@ export default function DashboardPage() {
                     }}
                   >
                     {formatAmount(expense.amountMinor)}
+                  </td>
+                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                    <button
+                      onClick={() => handleDelete(expense.expenseId)}
+                      disabled={deletingId === expense.expenseId}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: deletingId === expense.expenseId ? 'not-allowed' : 'pointer',
+                        opacity: deletingId === expense.expenseId ? 0.6 : 1,
+                      }}
+                    >
+                      {deletingId === expense.expenseId ? 'Deleting...' : 'Delete'}
+                    </button>
                   </td>
                 </tr>
               ))}

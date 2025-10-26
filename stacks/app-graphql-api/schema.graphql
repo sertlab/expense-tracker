@@ -8,6 +8,7 @@ type Expense {
   occurredAt: String!
   monthKey: String!
   createdAt: String!
+  user: User
 }
 
 input CreateExpenseInput {
@@ -17,6 +18,11 @@ input CreateExpenseInput {
   category: String!
   note: String
   occurredAt: String!
+}
+
+input DeleteExpenseInput {
+  userId: ID!
+  expenseId: ID!
 }
 
 type User {
@@ -48,4 +54,5 @@ type Query {
 type Mutation {
   createExpense(input: CreateExpenseInput!): Expense!
   updateUserProfile(input: UpdateUserProfileInput!): User!
+  deleteExpense(input: DeleteExpenseInput!): Boolean!
 }
