@@ -69,7 +69,14 @@ const resources: AWS['resources'] = {
       Type: 'AWS::AppSync::GraphQLApi',
       Properties: {
         Name: 'expense-tracker-api-${sls:stage}',
-        AuthenticationType: 'API_KEY',
+        AuthenticationType: 'AMAZON_COGNITO_USER_POOLS',
+        UserPoolConfig: {
+          UserPoolId: {
+            'Fn::ImportValue': 'expense-tracker-${sls:stage}-UserPoolId',
+          },
+          AwsRegion: '${aws:region}',
+          DefaultAction: 'ALLOW',
+        },
       },
     },
 
@@ -81,18 +88,6 @@ const resources: AWS['resources'] = {
           'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
         },
         Definition: graphqlSchema,
-      },
-    },
-
-    // AppSync API Key
-    GraphQLApiKey: {
-      Type: 'AWS::AppSync::ApiKey',
-      Properties: {
-        ApiId: {
-          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
-        },
-        Description: 'API Key for ${sls:stage}',
-        Expires: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60, // 1 year from now
       },
     },
 
@@ -217,15 +212,6 @@ const resources: AWS['resources'] = {
       },
       Export: {
         Name: 'expense-tracker-api-${sls:stage}-graphql-url',
-      },
-    },
-    GraphQLApiKey: {
-      Description: 'AppSync API Key',
-      Value: {
-        'Fn::GetAtt': ['GraphQLApiKey', 'ApiKey'],
-      },
-      Export: {
-        Name: 'expense-tracker-api-${sls:stage}-api-key',
       },
     },
   },

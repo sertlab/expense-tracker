@@ -107,7 +107,7 @@ const cognitoResources: AWS['resources'] = {
         Ref: 'UserPool',
       },
       Export: {
-        Name: 'expense-tracker-${sls:stage}-user-pool-id',
+        Name: 'expense-tracker-${sls:stage}-UserPoolId',
       },
     },
     UserPoolClientId: {
@@ -116,7 +116,7 @@ const cognitoResources: AWS['resources'] = {
         Ref: 'UserPoolClient',
       },
       Export: {
-        Name: 'expense-tracker-${sls:stage}-user-pool-client-id',
+        Name: 'expense-tracker-${sls:stage}-UserPoolClientId',
       },
     },
     HostedUiDomain: {
@@ -125,7 +125,7 @@ const cognitoResources: AWS['resources'] = {
         'Fn::Sub': 'https://expense-tracker-${sls:stage}.auth.${AWS::Region}.amazoncognito.com',
       },
       Export: {
-        Name: 'expense-tracker-${sls:stage}-hosted-ui-domain',
+        Name: 'expense-tracker-${sls:stage}-HostedUiDomain',
       },
     },
     UserPoolArn: {
@@ -134,7 +134,7 @@ const cognitoResources: AWS['resources'] = {
         'Fn::GetAtt': ['UserPool', 'Arn'],
       },
       Export: {
-        Name: 'expense-tracker-${sls:stage}-user-pool-arn',
+        Name: 'expense-tracker-${sls:stage}-UserPoolArn',
       },
     },
   },
