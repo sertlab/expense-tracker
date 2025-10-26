@@ -81,14 +81,14 @@ const cognitoResources: AWS['resources'] = {
           'ALLOW_USER_SRP_AUTH',
           'ALLOW_REFRESH_TOKEN_AUTH',
         ],
-        AllowedOAuthFlows: ['code'],
+        AllowedOAuthFlows: ['implicit', 'code'],
         AllowedOAuthScopes: ['email', 'openid', 'profile'],
         AllowedOAuthFlowsUserPoolClient: true,
         SupportedIdentityProviders: ['COGNITO'],
         CallbackURLs: [
-          'http://localhost:4200/callback',
-          'http://localhost:3000/callback',
-          'https://localhost:4200/callback',
+          'http://localhost:4200/auth/callback',
+          'http://localhost:3000/auth/callback',
+          'https://localhost:4200/auth/callback',
         ],
         LogoutURLs: [
           'http://localhost:4200',
