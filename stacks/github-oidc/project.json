@@ -1,0 +1,22 @@
+{
+  "name": "github-oidc",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "stacks/github-oidc",
+  "projectType": "application",
+  "targets": {
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx serverless deploy --verbose",
+        "cwd": "stacks/github-oidc"
+      }
+    },
+    "remove": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx serverless remove --verbose",
+        "cwd": "stacks/github-oidc"
+      }
+    }
+  }
+}

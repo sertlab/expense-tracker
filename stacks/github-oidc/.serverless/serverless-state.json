@@ -1,0 +1,326 @@
+{
+  "service": {
+    "service": "expense-tracker-github-oidc",
+    "serviceObject": {
+      "name": "expense-tracker-github-oidc"
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "eu-west-2",
+      "stage": "dev",
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "GitHubOIDCProvider": {
+            "Type": "AWS::IAM::OIDCProvider",
+            "Properties": {
+              "Url": "https://token.actions.githubusercontent.com",
+              "ClientIdList": [
+                "sts.amazonaws.com"
+              ],
+              "ThumbprintList": [
+                "6938fd4d98bab03faadb97b34396831e3780aea1",
+                "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
+              ]
+            }
+          },
+          "GitHubActionsRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "RoleName": "GitHubActionsDeployRole-dev",
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Federated": {
+                        "Fn::GetAtt": [
+                          "GitHubOIDCProvider",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    "Action": "sts:AssumeRoleWithWebIdentity",
+                    "Condition": {
+                      "StringEquals": {
+                        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                      },
+                      "StringLike": {
+                        "token.actions.githubusercontent.com:sub": "repo:sertlab/expense-tracker:ref:refs/heads/dev"
+                      }
+                    }
+                  }
+                ]
+              },
+              "ManagedPolicyArns": [
+                "arn:aws:iam::aws:policy/AdministratorAccess"
+              ]
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            },
+            "Export": {
+              "Name": "sls-expense-tracker-github-oidc-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "GitHubActionsRoleArn": {
+            "Description": "ARN of the GitHub Actions IAM Role",
+            "Value": {
+              "Fn::GetAtt": [
+                "GitHubActionsRole",
+                "Arn"
+              ]
+            },
+            "Export": {
+              "Name": "expense-tracker-github-actions-role-arn-dev"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      }
+    },
+    "pluginsData": {},
+    "functions": {},
+    "resources": {
+      "Resources": {
+        "GitHubOIDCProvider": {
+          "Type": "AWS::IAM::OIDCProvider",
+          "Properties": {
+            "Url": "https://token.actions.githubusercontent.com",
+            "ClientIdList": [
+              "sts.amazonaws.com"
+            ],
+            "ThumbprintList": [
+              "6938fd4d98bab03faadb97b34396831e3780aea1",
+              "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
+            ]
+          }
+        },
+        "GitHubActionsRole": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "RoleName": "GitHubActionsDeployRole-dev",
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Federated": {
+                      "Fn::GetAtt": [
+                        "GitHubOIDCProvider",
+                        "Arn"
+                      ]
+                    }
+                  },
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Condition": {
+                    "StringEquals": {
+                      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                    },
+                    "StringLike": {
+                      "token.actions.githubusercontent.com:sub": "repo:sertlab/expense-tracker:ref:refs/heads/dev"
+                    }
+                  }
+                }
+              ]
+            },
+            "ManagedPolicyArns": [
+              "arn:aws:iam::aws:policy/AdministratorAccess"
+            ]
+          }
+        }
+      },
+      "Outputs": {
+        "GitHubActionsRoleArn": {
+          "Description": "ARN of the GitHub Actions IAM Role",
+          "Value": {
+            "Fn::GetAtt": [
+              "GitHubActionsRole",
+              "Arn"
+            ]
+          },
+          "Export": {
+            "Name": "expense-tracker-github-actions-role-arn-dev"
+          }
+        }
+      }
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.ts",
+    "initialServerlessConfig": {
+      "service": "expense-tracker-github-oidc",
+      "frameworkVersion": "3",
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      }
+    },
+    "layers": {},
+    "isDashboardMonitoringPreconfigured": false
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/expense-tracker-github-oidc/dev/1761475659485-2025-10-26T10:47:39.485Z",
+    "artifact": ""
+  }
+}
