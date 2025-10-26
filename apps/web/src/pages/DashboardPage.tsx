@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { request } from '../api/graphql';
 import { getUserId } from '../auth/cognito';
 
@@ -27,9 +27,9 @@ interface Expense {
   user?: User;
 }
 
-const EXPENSES_BY_MONTH_QUERY = `
-  query ExpensesByMonth($userId: ID!, $month: String!) {
-    expensesByMonth(userId: $userId, month: $month) {
+const ALL_EXPENSES_BY_MONTH_QUERY = `
+  query AllExpensesByMonth($month: String!) {
+    allExpensesByMonth(month: $month) {
       expenseId
       userId
       amountMinor
@@ -56,34 +56,25 @@ const DELETE_EXPENSE_MUTATION = `
 `;
 
 export default function DashboardPage() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null); // null means "All Users"
 
   useEffect(() => {
     const fetchExpenses = async () => {
-      const userId = getUserId();
-      if (!userId) {
-        setError('User not authenticated');
-        setLoading(false);
-        return;
-      }
-
       try {
         // Get current month in YYYY-MM format
         const now = new Date();
         const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        const result = await request<{ expensesByMonth: Expense[] }>(
-          EXPENSES_BY_MONTH_QUERY,
-          {
-            userId,
-            month,
-          }
+        const result = await request<{ allExpensesByMonth: Expense[] }>(
+          ALL_EXPENSES_BY_MONTH_QUERY,
+          { month }
         );
 
-        setExpenses(result.expensesByMonth);
+        setAllExpenses(result.allExpensesByMonth);
       } catch (err) {
         console.error('Error fetching expenses:', err);
         setError((err as Error).message);
@@ -95,22 +86,45 @@ export default function DashboardPage() {
     fetchExpenses();
   }, []);
 
-  // Calculate totals per user
-  const userTotals = expenses.reduce((acc, expense) => {
-    const key = expense.userId;
-    if (!acc[key]) {
-      acc[key] = {
-        userId: expense.userId,
-        user: expense.user,
-        total: 0,
-      };
+  // Filter expenses based on selected user
+  const filteredExpenses = useMemo(() => {
+    if (selectedUserId === null) {
+      return allExpenses; // Show all
     }
-    acc[key].total += expense.amountMinor;
-    return acc;
-  }, {} as Record<string, { userId: string; user?: User; total: number }>);
+    return allExpenses.filter((e) => e.userId === selectedUserId);
+  }, [allExpenses, selectedUserId]);
 
-  // Calculate monthly total
-  const monthlyTotal = expenses.reduce((sum, expense) => sum + expense.amountMinor, 0);
+  // Get unique users from expenses
+  const uniqueUsers = useMemo(() => {
+    const usersMap = new Map<string, User>();
+    allExpenses.forEach((expense) => {
+      if (expense.user && !usersMap.has(expense.userId)) {
+        usersMap.set(expense.userId, expense.user);
+      }
+    });
+    return Array.from(usersMap.values());
+  }, [allExpenses]);
+
+  // Calculate totals per user
+  const userTotals = useMemo(() => {
+    return allExpenses.reduce((acc, expense) => {
+      const key = expense.userId;
+      if (!acc[key]) {
+        acc[key] = {
+          userId: expense.userId,
+          user: expense.user,
+          total: 0,
+        };
+      }
+      acc[key].total += expense.amountMinor;
+      return acc;
+    }, {} as Record<string, { userId: string; user?: User; total: number }>);
+  }, [allExpenses]);
+
+  // Calculate total for filtered expenses
+  const filteredTotal = useMemo(() => {
+    return filteredExpenses.reduce((sum, expense) => sum + expense.amountMinor, 0);
+  }, [filteredExpenses]);
 
   // Format amount in £
   const formatAmount = (amountMinor: number) => {
@@ -140,10 +154,7 @@ export default function DashboardPage() {
   };
 
   // Handle delete
-  const handleDelete = async (expenseId: string) => {
-    const userId = getUserId();
-    if (!userId) return;
-
+  const handleDelete = async (expenseId: string, expenseUserId: string) => {
     if (!confirm('Are you sure you want to delete this expense?')) {
       return;
     }
@@ -151,11 +162,11 @@ export default function DashboardPage() {
     setDeletingId(expenseId);
     try {
       await request(DELETE_EXPENSE_MUTATION, {
-        input: { userId, expenseId },
+        input: { userId: expenseUserId, expenseId },
       });
 
       // Remove from local state
-      setExpenses((prev) => prev.filter((e) => e.expenseId !== expenseId));
+      setAllExpenses((prev) => prev.filter((e) => e.expenseId !== expenseId));
     } catch (err) {
       console.error('Error deleting expense:', err);
       alert(`Failed to delete expense: ${(err as Error).message}`);
@@ -182,25 +193,60 @@ export default function DashboardPage() {
     );
   }
 
-  const userId = getUserId();
-
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>Dashboard Test</h1>
+      <h1>Dashboard</h1>
 
       <div style={{ marginBottom: '2rem' }}>
         <h2>
           {new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
         </h2>
         <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-          Total: {formatAmount(monthlyTotal)}
-        </p>
-        <p style={{ fontSize: '0.875rem', color: '#666' }}>
-          User ID: {userId}
+          {selectedUserId === null ? 'Total (All Users)' : 'Total'}: {formatAmount(filteredTotal)}
         </p>
       </div>
 
-      {Object.keys(userTotals).length > 0 && (
+      {/* Tabs */}
+      <div style={{ marginBottom: '2rem', borderBottom: '2px solid #e5e7eb' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
+          <button
+            onClick={() => setSelectedUserId(null)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              border: 'none',
+              backgroundColor: 'transparent',
+              borderBottom: selectedUserId === null ? '3px solid #3b82f6' : '3px solid transparent',
+              fontWeight: selectedUserId === null ? 'bold' : 'normal',
+              color: selectedUserId === null ? '#3b82f6' : '#6b7280',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            All Users ({allExpenses.length})
+          </button>
+          {uniqueUsers.map((user) => (
+            <button
+              key={user.userId}
+              onClick={() => setSelectedUserId(user.userId)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                border: 'none',
+                backgroundColor: 'transparent',
+                borderBottom: selectedUserId === user.userId ? '3px solid #3b82f6' : '3px solid transparent',
+                fontWeight: selectedUserId === user.userId ? 'bold' : 'normal',
+                color: selectedUserId === user.userId ? '#3b82f6' : '#6b7280',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {formatUserName(user)} ({allExpenses.filter((e) => e.userId === user.userId).length})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Totals by User */}
+      {selectedUserId === null && Object.keys(userTotals).length > 0 && (
         <div style={{ marginBottom: '2rem' }}>
           <h3>Totals by User</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -227,8 +273,9 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {expenses.length === 0 ? (
-        <p>No expenses for this month.</p>
+      {/* Expenses Table */}
+      {filteredExpenses.length === 0 ? (
+        <p>No expenses {selectedUserId !== null ? 'for this user' : 'for this month'}.</p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table
@@ -298,7 +345,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {expenses.map((expense) => (
+              {filteredExpenses.map((expense) => (
                 <tr
                   key={expense.expenseId}
                   style={{ borderBottom: '1px solid #eee' }}
@@ -322,7 +369,7 @@ export default function DashboardPage() {
                   </td>
                   <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                     <button
-                      onClick={() => handleDelete(expense.expenseId)}
+                      onClick={() => handleDelete(expense.expenseId, expense.userId)}
                       disabled={deletingId === expense.expenseId}
                       style={{
                         padding: '0.375rem 0.75rem',

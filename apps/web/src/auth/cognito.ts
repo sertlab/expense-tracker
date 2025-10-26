@@ -68,6 +68,7 @@ export function getUserId(): string | null {
 
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log(payload);
     return payload.sub || null;
   } catch (error) {
     console.error('Error decoding token:', error);

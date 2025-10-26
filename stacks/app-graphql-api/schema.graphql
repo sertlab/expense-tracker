@@ -48,6 +48,7 @@ input UpdateUserProfileInput {
 
 type Query {
   expensesByMonth(userId: ID!, month: String!): [Expense!]!
+  allExpensesByMonth(month: String!): [Expense!]!
   getUserProfile(userId: ID!): User
 }
 

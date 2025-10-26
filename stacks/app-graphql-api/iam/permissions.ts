@@ -8,6 +8,7 @@ const iamRoleStatements = [
       'dynamodb:UpdateItem',
       'dynamodb:DeleteItem',
       'dynamodb:BatchGetItem',
+      'dynamodb:Scan',
     ],
     Resource: [
       {

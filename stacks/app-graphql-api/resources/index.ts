@@ -163,6 +163,9 @@ const resources: AWS['resources'] = {
                       'Fn::GetAtt': ['ListExpensesByMonthLambdaFunction', 'Arn'],
                     },
                     {
+                      'Fn::GetAtt': ['ListAllExpensesByMonthLambdaFunction', 'Arn'],
+                    },
+                    {
                       'Fn::GetAtt': ['GetUserProfileLambdaFunction', 'Arn'],
                     },
                     {
@@ -248,6 +251,42 @@ const resources: AWS['resources'] = {
         FieldName: 'expensesByMonth',
         DataSourceName: {
           'Fn::GetAtt': ['ListExpensesByMonthDataSource', 'Name'],
+        },
+      },
+    },
+
+    // Data Source for listAllExpensesByMonth Lambda
+    ListAllExpensesByMonthDataSource: {
+      Type: 'AWS::AppSync::DataSource',
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        Name: 'ListAllExpensesByMonthDataSource',
+        Type: 'AWS_LAMBDA',
+        ServiceRoleArn: {
+          'Fn::GetAtt': ['AppSyncLambdaRole', 'Arn'],
+        },
+        LambdaConfig: {
+          LambdaFunctionArn: {
+            'Fn::GetAtt': ['ListAllExpensesByMonthLambdaFunction', 'Arn'],
+          },
+        },
+      },
+    },
+
+    // Resolver for Query.allExpensesByMonth
+    AllExpensesByMonthResolver: {
+      Type: 'AWS::AppSync::Resolver',
+      DependsOn: ['GraphQLSchema'],
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        TypeName: 'Query',
+        FieldName: 'allExpensesByMonth',
+        DataSourceName: {
+          'Fn::GetAtt': ['ListAllExpensesByMonthDataSource', 'Name'],
         },
       },
     },
