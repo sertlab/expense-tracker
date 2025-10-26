@@ -19,10 +19,33 @@ input CreateExpenseInput {
   occurredAt: String!
 }
 
+type User {
+  userId: ID!
+  email: String!
+  firstName: String
+  lastName: String
+  dateOfBirth: String
+  address: String
+  phone: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+input UpdateUserProfileInput {
+  userId: ID!
+  firstName: String
+  lastName: String
+  dateOfBirth: String
+  address: String
+  phone: String
+}
+
 type Query {
   expensesByMonth(userId: ID!, month: String!): [Expense!]!
+  getUserProfile(userId: ID!): User
 }
 
 type Mutation {
   createExpense(input: CreateExpenseInput!): Expense!
+  updateUserProfile(input: UpdateUserProfileInput!): User!
 }

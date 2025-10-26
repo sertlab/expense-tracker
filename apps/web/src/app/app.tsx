@@ -5,6 +5,7 @@ import LoginPage from '../pages/LoginPage';
 import CallbackPage from '../pages/CallbackPage';
 import DashboardPage from '../pages/DashboardPage';
 import AddExpensePage from '../pages/AddExpensePage';
+import ProfilePage from '../pages/ProfilePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isSignedIn()) {
@@ -34,6 +35,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AddExpensePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

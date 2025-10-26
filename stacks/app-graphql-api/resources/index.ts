@@ -9,7 +9,7 @@ const graphqlSchema = readFileSync(
 
 const resources: AWS['resources'] = {
   Resources: {
-    // DynamoDB Table
+    // DynamoDB Expenses Table
     ExpenseTable: {
       Type: 'AWS::DynamoDB::Table',
       Properties: {
@@ -54,6 +54,45 @@ const resources: AWS['resources'] = {
               {
                 AttributeName: 'GSI1SK',
                 KeyType: 'RANGE',
+              },
+            ],
+            Projection: {
+              ProjectionType: 'ALL',
+            },
+          },
+        ],
+      },
+    },
+
+    // DynamoDB Users Table
+    UsersTable: {
+      Type: 'AWS::DynamoDB::Table',
+      Properties: {
+        TableName: 'users-${sls:stage}',
+        BillingMode: 'PAY_PER_REQUEST',
+        AttributeDefinitions: [
+          {
+            AttributeName: 'userId',
+            AttributeType: 'S',
+          },
+          {
+            AttributeName: 'email',
+            AttributeType: 'S',
+          },
+        ],
+        KeySchema: [
+          {
+            AttributeName: 'userId',
+            KeyType: 'HASH',
+          },
+        ],
+        GlobalSecondaryIndexes: [
+          {
+            IndexName: 'EmailIndex',
+            KeySchema: [
+              {
+                AttributeName: 'email',
+                KeyType: 'HASH',
               },
             ],
             Projection: {
@@ -122,6 +161,12 @@ const resources: AWS['resources'] = {
                     },
                     {
                       'Fn::GetAtt': ['ListExpensesByMonthLambdaFunction', 'Arn'],
+                    },
+                    {
+                      'Fn::GetAtt': ['GetUserProfileLambdaFunction', 'Arn'],
+                    },
+                    {
+                      'Fn::GetAtt': ['UpdateUserProfileLambdaFunction', 'Arn'],
                     },
                   ],
                 },
@@ -200,6 +245,78 @@ const resources: AWS['resources'] = {
         FieldName: 'expensesByMonth',
         DataSourceName: {
           'Fn::GetAtt': ['ListExpensesByMonthDataSource', 'Name'],
+        },
+      },
+    },
+
+    // Data Source for getUserProfile Lambda
+    GetUserProfileDataSource: {
+      Type: 'AWS::AppSync::DataSource',
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        Name: 'GetUserProfileDataSource',
+        Type: 'AWS_LAMBDA',
+        ServiceRoleArn: {
+          'Fn::GetAtt': ['AppSyncLambdaRole', 'Arn'],
+        },
+        LambdaConfig: {
+          LambdaFunctionArn: {
+            'Fn::GetAtt': ['GetUserProfileLambdaFunction', 'Arn'],
+          },
+        },
+      },
+    },
+
+    // Data Source for updateUserProfile Lambda
+    UpdateUserProfileDataSource: {
+      Type: 'AWS::AppSync::DataSource',
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        Name: 'UpdateUserProfileDataSource',
+        Type: 'AWS_LAMBDA',
+        ServiceRoleArn: {
+          'Fn::GetAtt': ['AppSyncLambdaRole', 'Arn'],
+        },
+        LambdaConfig: {
+          LambdaFunctionArn: {
+            'Fn::GetAtt': ['UpdateUserProfileLambdaFunction', 'Arn'],
+          },
+        },
+      },
+    },
+
+    // Resolver for Query.getUserProfile
+    GetUserProfileResolver: {
+      Type: 'AWS::AppSync::Resolver',
+      DependsOn: ['GraphQLSchema'],
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        TypeName: 'Query',
+        FieldName: 'getUserProfile',
+        DataSourceName: {
+          'Fn::GetAtt': ['GetUserProfileDataSource', 'Name'],
+        },
+      },
+    },
+
+    // Resolver for Mutation.updateUserProfile
+    UpdateUserProfileResolver: {
+      Type: 'AWS::AppSync::Resolver',
+      DependsOn: ['GraphQLSchema'],
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        TypeName: 'Mutation',
+        FieldName: 'updateUserProfile',
+        DataSourceName: {
+          'Fn::GetAtt': ['UpdateUserProfileDataSource', 'Name'],
         },
       },
     },

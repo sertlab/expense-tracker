@@ -5,6 +5,7 @@ const iamRoleStatements = [
       'dynamodb:PutItem',
       'dynamodb:GetItem',
       'dynamodb:Query',
+      'dynamodb:UpdateItem',
     ],
     Resource: [
       {
@@ -12,6 +13,12 @@ const iamRoleStatements = [
       },
       {
         'Fn::Sub': '${ExpenseTable.Arn}/index/GSI1',
+      },
+      {
+        'Fn::GetAtt': ['UsersTable', 'Arn'],
+      },
+      {
+        'Fn::Sub': '${UsersTable.Arn}/index/EmailIndex',
       },
     ],
   },

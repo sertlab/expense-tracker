@@ -29,6 +29,9 @@ export default function Layout() {
               <Link to="/add" style={{ color: 'white', textDecoration: 'none' }}>
                 Add
               </Link>
+              <Link to="/profile" style={{ color: 'white', textDecoration: 'none' }}>
+                Profile
+              </Link>
             </>
           )}
         </div>
