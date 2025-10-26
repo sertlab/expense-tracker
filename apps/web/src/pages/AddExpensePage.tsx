@@ -1,33 +1,145 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useState } from 'react';
+import { request } from '../api/graphql';
+import { getUserId } from '../auth/cognito';
+
+const addExpenseSchema = z.object({
+  amount: z
+    .number({ required_error: 'Amount is required' })
+    .positive('Amount must be positive')
+    .max(999999.99, 'Amount too large'),
+  category: z.string().min(1, 'Category is required'),
+  date: z.string().min(1, 'Date is required'),
+  note: z.string().optional(),
+});
+
+type AddExpenseFormData = z.infer<typeof addExpenseSchema>;
+
+const CREATE_EXPENSE_MUTATION = `
+  mutation CreateExpense($input: CreateExpenseInput!) {
+    createExpense(input: $input) {
+      expenseId
+      userId
+      amountMinor
+      currency
+      category
+      note
+      occurredAt
+      createdAt
+    }
+  }
+`;
 
 export default function AddExpensePage() {
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [date, setDate] = useState('');
-  const [note, setNote] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AddExpenseFormData>({
+    resolver: zodResolver(addExpenseSchema),
+    defaultValues: {
+      date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD
+    },
+  });
+
+  const onSubmit = async (data: AddExpenseFormData) => {
+    const userId = getUserId();
+    if (!userId) {
+      alert('User not authenticated');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Convert amount (£ decimal) to amountMinor (pence)
+      const amountMinor = Math.round(data.amount * 100);
+
+      // Convert date to ISO occurredAt
+      const occurredAt = new Date(data.date).toISOString();
+
+      await request(CREATE_EXPENSE_MUTATION, {
+        input: {
+          userId,
+          amountMinor,
+          currency: 'GBP',
+          category: data.category,
+          note: data.note || undefined,
+          occurredAt,
+        },
+      });
+
+      // Show success toast
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+
+      // Clear form
+      reset({
+        amount: undefined,
+        category: '',
+        date: new Date().toISOString().split('T')[0],
+        note: '',
+      });
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      alert('Failed to create expense: ' + (error as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
       <h1>Add Expense</h1>
-      <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+      {showToast && (
+        <div
+          style={{
+            padding: '1rem',
+            marginBottom: '1rem',
+            backgroundColor: '#4caf50',
+            color: 'white',
+            borderRadius: '4px',
+            textAlign: 'center',
+          }}
+        >
+          Expense added successfully!
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+      >
         <div>
           <label htmlFor="amount" style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Amount
+            Amount (£)
           </label>
           <input
             id="amount"
             type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            step="0.01"
             placeholder="0.00"
+            {...register('amount', { valueAsNumber: true })}
             style={{
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: errors.amount ? '1px solid red' : '1px solid #ccc',
               borderRadius: '4px',
             }}
           />
+          {errors.amount && (
+            <span style={{ color: 'red', fontSize: '0.875rem' }}>
+              {errors.amount.message}
+            </span>
+          )}
         </div>
 
         <div>
@@ -37,17 +149,21 @@ export default function AddExpensePage() {
           <input
             id="category"
             type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
             placeholder="e.g., Food, Transport"
+            {...register('category')}
             style={{
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: errors.category ? '1px solid red' : '1px solid #ccc',
               borderRadius: '4px',
             }}
           />
+          {errors.category && (
+            <span style={{ color: 'red', fontSize: '0.875rem' }}>
+              {errors.category.message}
+            </span>
+          )}
         </div>
 
         <div>
@@ -57,16 +173,20 @@ export default function AddExpensePage() {
           <input
             id="date"
             type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            {...register('date')}
             style={{
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: errors.date ? '1px solid red' : '1px solid #ccc',
               borderRadius: '4px',
             }}
           />
+          {errors.date && (
+            <span style={{ color: 'red', fontSize: '0.875rem' }}>
+              {errors.date.message}
+            </span>
+          )}
         </div>
 
         <div>
@@ -75,10 +195,9 @@ export default function AddExpensePage() {
           </label>
           <textarea
             id="note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
             placeholder="Add a note..."
             rows={3}
+            {...register('note')}
             style={{
               width: '100%',
               padding: '0.5rem',
@@ -91,19 +210,19 @@ export default function AddExpensePage() {
         </div>
 
         <button
-          type="button"
-          disabled
+          type="submit"
+          disabled={isSubmitting}
           style={{
             padding: '0.75rem',
             fontSize: '1rem',
-            backgroundColor: '#ccc',
-            color: '#666',
+            backgroundColor: isSubmitting ? '#ccc' : '#0070f3',
+            color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'not-allowed',
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
           }}
         >
-          Submit (not implemented)
+          {isSubmitting ? 'Adding...' : 'Add Expense'}
         </button>
       </form>
     </div>

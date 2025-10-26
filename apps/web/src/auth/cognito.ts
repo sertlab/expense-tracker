@@ -58,3 +58,19 @@ export function signOut(): void {
   localStorage.removeItem(ID_TOKEN_KEY);
   window.location.href = '/login';
 }
+
+/**
+ * Decode JWT token and extract user ID (sub claim)
+ */
+export function getUserId(): string | null {
+  const token = getIdToken();
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.sub || null;
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
+}
