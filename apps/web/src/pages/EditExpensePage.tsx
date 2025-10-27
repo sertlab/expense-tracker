@@ -19,8 +19,8 @@ const editExpenseSchema = z.object({
 type EditExpenseFormData = z.infer<typeof editExpenseSchema>;
 
 const GET_EXPENSE_QUERY = `
-  query GetExpense($userId: ID!, $month: String!) {
-    expensesByMonth(userId: $userId, month: $month) {
+  query GetExpense($userId: ID!, $expenseId: ID!) {
+    getExpense(userId: $userId, expenseId: $expenseId) {
       expenseId
       userId
       amountMinor
@@ -69,16 +69,13 @@ export default function EditExpensePage() {
       }
 
       try {
-        // We need to fetch from the current month to find the expense
-        const now = new Date();
-        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-        const result = await request<{ expensesByMonth: any[] }>(
+        // Fetch the expense directly by userId and expenseId
+        const result = await request<{ getExpense: any | null }>(
           GET_EXPENSE_QUERY,
-          { userId, month }
+          { userId, expenseId }
         );
 
-        const expense = result.expensesByMonth.find(e => e.expenseId === expenseId);
+        const expense = result.getExpense;
 
         if (!expense) {
           alert('Expense not found');
