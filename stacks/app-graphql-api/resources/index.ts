@@ -166,6 +166,9 @@ const resources: AWS['resources'] = {
                       'Fn::GetAtt': ['ListAllExpensesByMonthLambdaFunction', 'Arn'],
                     },
                     {
+                      'Fn::GetAtt': ['UpdateExpenseLambdaFunction', 'Arn'],
+                    },
+                    {
                       'Fn::GetAtt': ['GetUserProfileLambdaFunction', 'Arn'],
                     },
                     {
@@ -287,6 +290,42 @@ const resources: AWS['resources'] = {
         FieldName: 'allExpensesByMonth',
         DataSourceName: {
           'Fn::GetAtt': ['ListAllExpensesByMonthDataSource', 'Name'],
+        },
+      },
+    },
+
+    // Data Source for updateExpense Lambda
+    UpdateExpenseDataSource: {
+      Type: 'AWS::AppSync::DataSource',
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        Name: 'UpdateExpenseDataSource',
+        Type: 'AWS_LAMBDA',
+        ServiceRoleArn: {
+          'Fn::GetAtt': ['AppSyncLambdaRole', 'Arn'],
+        },
+        LambdaConfig: {
+          LambdaFunctionArn: {
+            'Fn::GetAtt': ['UpdateExpenseLambdaFunction', 'Arn'],
+          },
+        },
+      },
+    },
+
+    // Resolver for Mutation.updateExpense
+    UpdateExpenseResolver: {
+      Type: 'AWS::AppSync::Resolver',
+      DependsOn: ['GraphQLSchema'],
+      Properties: {
+        ApiId: {
+          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
+        },
+        TypeName: 'Mutation',
+        FieldName: 'updateExpense',
+        DataSourceName: {
+          'Fn::GetAtt': ['UpdateExpenseDataSource', 'Name'],
         },
       },
     },

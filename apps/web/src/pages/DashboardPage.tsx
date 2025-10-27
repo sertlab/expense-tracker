@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { request } from '../api/graphql';
 import { getUserId } from '../auth/cognito';
 
@@ -49,6 +50,17 @@ const ALL_EXPENSES_BY_MONTH_QUERY = `
   }
 `;
 
+const GET_USER_PROFILE_QUERY = `
+  query GetUserProfile($userId: ID!) {
+    getUserProfile(userId: $userId) {
+      userId
+      email
+      firstName
+      lastName
+    }
+  }
+`;
+
 const DELETE_EXPENSE_MUTATION = `
   mutation DeleteExpense($input: DeleteExpenseInput!) {
     deleteExpense(input: $input)
@@ -56,34 +68,45 @@ const DELETE_EXPENSE_MUTATION = `
 `;
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null); // null means "All Users"
 
   useEffect(() => {
-    const fetchExpenses = async () => {
+    const fetchData = async () => {
+      const userId = getUserId();
+      if (!userId) {
+        setError('User not authenticated');
+        setLoading(false);
+        return;
+      }
+
       try {
         // Get current month in YYYY-MM format
         const now = new Date();
         const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        const result = await request<{ allExpensesByMonth: Expense[] }>(
-          ALL_EXPENSES_BY_MONTH_QUERY,
-          { month }
-        );
+        // Fetch expenses and user profile in parallel
+        const [expensesResult, profileResult] = await Promise.all([
+          request<{ allExpensesByMonth: Expense[] }>(ALL_EXPENSES_BY_MONTH_QUERY, { month }),
+          request<{ getUserProfile: User }>(GET_USER_PROFILE_QUERY, { userId }),
+        ]);
 
-        setAllExpenses(result.allExpensesByMonth);
+        setAllExpenses(expensesResult.allExpensesByMonth);
+        setCurrentUser(profileResult.getUserProfile);
       } catch (err) {
-        console.error('Error fetching expenses:', err);
+        console.error('Error fetching data:', err);
         setError((err as Error).message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchExpenses();
+    fetchData();
   }, []);
 
   // Filter expenses based on selected user
@@ -155,6 +178,14 @@ export default function DashboardPage() {
 
   // Handle delete
   const handleDelete = async (expenseId: string, expenseUserId: string) => {
+    const currentUserId = getUserId();
+
+    // Only allow deleting own expenses
+    if (currentUserId !== expenseUserId) {
+      alert('You can only delete your own expenses');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this expense?')) {
       return;
     }
@@ -173,6 +204,12 @@ export default function DashboardPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // Check if current user can edit/delete the expense
+  const canManageExpense = (expenseUserId: string) => {
+    const currentUserId = getUserId();
+    return currentUserId === expenseUserId;
   };
 
   if (loading) {
@@ -195,7 +232,14 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h1>Dashboard</h1>
+        {currentUser && currentUser.firstName && (
+          <div style={{ fontSize: '1.125rem', color: '#333' }}>
+            Hi {currentUser.firstName}
+          </div>
+        )}
+      </div>
 
       <div style={{ marginBottom: '2rem' }}>
         <h2>
@@ -368,21 +412,40 @@ export default function DashboardPage() {
                     {formatAmount(expense.amountMinor)}
                   </td>
                   <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                    <button
-                      onClick={() => handleDelete(expense.expenseId, expense.userId)}
-                      disabled={deletingId === expense.expenseId}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: deletingId === expense.expenseId ? 'not-allowed' : 'pointer',
-                        opacity: deletingId === expense.expenseId ? 0.6 : 1,
-                      }}
-                    >
-                      {deletingId === expense.expenseId ? 'Deleting...' : 'Delete'}
-                    </button>
+                    {canManageExpense(expense.userId) ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => navigate(`/edit/${expense.expenseId}`)}
+                          style={{
+                            padding: '0.375rem 0.75rem',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(expense.expenseId, expense.userId)}
+                          disabled={deletingId === expense.expenseId}
+                          style={{
+                            padding: '0.375rem 0.75rem',
+                            backgroundColor: '#dc2626',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: deletingId === expense.expenseId ? 'not-allowed' : 'pointer',
+                            opacity: deletingId === expense.expenseId ? 0.6 : 1,
+                          }}
+                        >
+                          {deletingId === expense.expenseId ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>-</span>
+                    )}
                   </td>
                 </tr>
               ))}

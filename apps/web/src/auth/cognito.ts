@@ -2,7 +2,7 @@ const COGNITO_DOMAIN = import.meta.env.VITE_COGNITO_DOMAIN;
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 
-const ID_TOKEN_KEY = 'id_token';
+const ACCESS_TOKEN_KEY = 'access_token';
 
 /**
  * Build Cognito Hosted UI login URL with implicit flow
@@ -15,20 +15,28 @@ export function buildLoginUrl(): string {
     redirect_uri: REDIRECT_URI,
   });
 
-  return `${COGNITO_DOMAIN}/login?${params.toString()}`;
+  const url = `${COGNITO_DOMAIN}/login?${params.toString()}`;
+  console.log('Login URL:', url);
+  return url;
+}
+
+export function dashboardPage(): string {
+  return `${window.location.origin}/`;
 }
 
 /**
- * Parse id_token from URL hash fragment and store in localStorage
+ * Parse access_token from URL hash fragment and store in localStorage
  * Returns true if token was found and stored
  */
 export function parseAndStoreIdTokenFromHash(): boolean {
   const hash = window.location.hash.substring(1); // Remove #
-  const params = new URLSearchParams(hash);
-  const idToken = params.get('id_token');
+  const hashParams = new URLSearchParams(hash);
+  const accessToken = hashParams.get('access_token');
 
-  if (idToken) {
-    localStorage.setItem(ID_TOKEN_KEY, idToken);
+  console.log('Hash params:', Object.fromEntries(hashParams.entries()));
+
+  if (accessToken) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     // Clean up the URL
     window.history.replaceState(null, '', window.location.pathname);
     return true;
@@ -38,10 +46,10 @@ export function parseAndStoreIdTokenFromHash(): boolean {
 }
 
 /**
- * Get stored ID token
+ * Get stored access token
  */
 export function getIdToken(): string | null {
-  return localStorage.getItem(ID_TOKEN_KEY);
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 /**
@@ -55,7 +63,7 @@ export function isSignedIn(): boolean {
  * Sign out: clear token and redirect to login
  */
 export function signOut(): void {
-  localStorage.removeItem(ID_TOKEN_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.location.href = '/login';
 }
 
@@ -68,8 +76,8 @@ export function getUserId(): string | null {
 
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log(payload);
-    return payload.sub || null;
+    console.log('Token payload:', payload);
+    return payload.sub || payload.username || null;
   } catch (error) {
     console.error('Error decoding token:', error);
     return null;

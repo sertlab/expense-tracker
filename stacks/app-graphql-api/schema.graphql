@@ -20,6 +20,15 @@ input CreateExpenseInput {
   occurredAt: String!
 }
 
+input UpdateExpenseInput {
+  userId: ID!
+  expenseId: ID!
+  amountMinor: Int
+  category: String
+  note: String
+  occurredAt: String
+}
+
 input DeleteExpenseInput {
   userId: ID!
   expenseId: ID!
@@ -54,6 +63,7 @@ type Query {
 
 type Mutation {
   createExpense(input: CreateExpenseInput!): Expense!
+  updateExpense(input: UpdateExpenseInput!): Expense!
   updateUserProfile(input: UpdateUserProfileInput!): User!
   deleteExpense(input: DeleteExpenseInput!): Boolean!
 }

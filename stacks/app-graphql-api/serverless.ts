@@ -2,6 +2,7 @@ import type { AWS } from '@serverless/typescript';
 import createExpense from './functions/createExpense';
 import listExpensesByMonth from './functions/listExpensesByMonth';
 import listAllExpensesByMonth from './functions/listAllExpensesByMonth';
+import updateExpense from './functions/updateExpense';
 import getUserProfile from './functions/getUserProfile';
 import updateUserProfile from './functions/updateUserProfile';
 import deleteExpense from './functions/deleteExpense';
@@ -33,6 +34,7 @@ const config: AWS = {
     ...createExpense,
     ...listExpensesByMonth,
     ...listAllExpensesByMonth,
+    ...updateExpense,
     ...getUserProfile,
     ...updateUserProfile,
     ...deleteExpense,

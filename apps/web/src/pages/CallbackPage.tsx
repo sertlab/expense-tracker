@@ -6,12 +6,25 @@ export default function CallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Only run if we're actually on the callback page
+    if (window.location.pathname !== '/auth/callback') {
+      console.log('CallbackPage: Not on callback route, skipping');
+      return;
+    }
+
+    console.log('CallbackPage: Current URL:', window.location.href);
+    console.log('CallbackPage: Hash:', window.location.hash);
+    console.log('CallbackPage: Search:', window.location.search);
+
     const success = parseAndStoreIdTokenFromHash();
+    console.log('CallbackPage: Token parse success:', success);
+
     if (success) {
-      navigate('/dashboard');
+      console.log('CallbackPage: Redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
-      // No token found, redirect to login
-      navigate('/login');
+      console.log('CallbackPage: No token found, redirecting to login');
+      navigate('/login', { replace: true });
     }
   }, [navigate]);
 

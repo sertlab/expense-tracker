@@ -1,12 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { request } from '../api/graphql';
 import { getUserId } from '../auth/cognito';
 
-const addExpenseSchema = z.object({
+const editExpenseSchema = z.object({
   amount: z
     .number({ required_error: 'Amount is required' })
     .positive('Amount must be positive')
@@ -16,11 +16,11 @@ const addExpenseSchema = z.object({
   note: z.string().optional(),
 });
 
-type AddExpenseFormData = z.infer<typeof addExpenseSchema>;
+type EditExpenseFormData = z.infer<typeof editExpenseSchema>;
 
-const CREATE_EXPENSE_MUTATION = `
-  mutation CreateExpense($input: CreateExpenseInput!) {
-    createExpense(input: $input) {
+const GET_EXPENSE_QUERY = `
+  query GetExpense($userId: ID!, $month: String!) {
+    expensesByMonth(userId: $userId, month: $month) {
       expenseId
       userId
       amountMinor
@@ -28,29 +28,90 @@ const CREATE_EXPENSE_MUTATION = `
       category
       note
       occurredAt
-      createdAt
     }
   }
 `;
 
-export default function AddExpensePage() {
+const UPDATE_EXPENSE_MUTATION = `
+  mutation UpdateExpense($input: UpdateExpenseInput!) {
+    updateExpense(input: $input) {
+      expenseId
+      userId
+      amountMinor
+      category
+      note
+      occurredAt
+    }
+  }
+`;
+
+export default function EditExpensePage() {
   const navigate = useNavigate();
+  const { expenseId } = useParams<{ expenseId: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
-  } = useForm<AddExpenseFormData>({
-    resolver: zodResolver(addExpenseSchema),
-    defaultValues: {
-      date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD
-    },
+  } = useForm<EditExpenseFormData>({
+    resolver: zodResolver(editExpenseSchema),
   });
 
-  const onSubmit = async (data: AddExpenseFormData) => {
+  useEffect(() => {
+    const fetchExpense = async () => {
+      const userId = getUserId();
+      if (!userId || !expenseId) {
+        navigate('/dashboard');
+        return;
+      }
+
+      try {
+        // We need to fetch from the current month to find the expense
+        const now = new Date();
+        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        const result = await request<{ expensesByMonth: any[] }>(
+          GET_EXPENSE_QUERY,
+          { userId, month }
+        );
+
+        const expense = result.expensesByMonth.find(e => e.expenseId === expenseId);
+
+        if (!expense) {
+          alert('Expense not found');
+          navigate('/dashboard');
+          return;
+        }
+
+        if (expense.userId !== userId) {
+          alert('You can only edit your own expenses');
+          navigate('/dashboard');
+          return;
+        }
+
+        // Pre-fill the form
+        setValue('amount', expense.amountMinor / 100);
+        setValue('category', expense.category);
+        setValue('date', expense.occurredAt.split('T')[0]);
+        setValue('note', expense.note || '');
+      } catch (error) {
+        console.error('Error fetching expense:', error);
+        alert('Failed to load expense');
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpense();
+  }, [expenseId, navigate, setValue]);
+
+  const onSubmit = async (data: EditExpenseFormData) => {
     const userId = getUserId();
-    if (!userId) {
+    if (!userId || !expenseId) {
       alert('User not authenticated');
       return;
     }
@@ -64,11 +125,11 @@ export default function AddExpensePage() {
       // Convert date to ISO occurredAt
       const occurredAt = new Date(data.date).toISOString();
 
-      await request(CREATE_EXPENSE_MUTATION, {
+      await request(UPDATE_EXPENSE_MUTATION, {
         input: {
           userId,
+          expenseId,
           amountMinor,
-          currency: 'GBP',
           category: data.category,
           note: data.note || undefined,
           occurredAt,
@@ -78,16 +139,25 @@ export default function AddExpensePage() {
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error creating expense:', error);
-      alert('Failed to create expense: ' + (error as Error).message);
+      console.error('Error updating expense:', error);
+      alert('Failed to update expense: ' + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+        <h1>Edit Expense</h1>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>Add Expense</h1>
+      <h1>Edit Expense</h1>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -185,21 +255,40 @@ export default function AddExpensePage() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            padding: '0.75rem',
-            fontSize: '1rem',
-            backgroundColor: isSubmitting ? '#ccc' : '#0070f3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {isSubmitting ? 'Adding...' : 'Add Expense'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              fontSize: '1rem',
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              fontSize: '1rem',
+              backgroundColor: isSubmitting ? '#ccc' : '#0070f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
       </form>
     </div>
   );

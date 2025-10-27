@@ -5,6 +5,7 @@ import LoginPage from '../pages/LoginPage';
 import CallbackPage from '../pages/CallbackPage';
 import DashboardPage from '../pages/DashboardPage';
 import AddExpensePage from '../pages/AddExpensePage';
+import EditExpensePage from '../pages/EditExpensePage';
 import ProfilePage from '../pages/ProfilePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AddExpensePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="edit/:expenseId"
+            element={
+              <ProtectedRoute>
+                <EditExpensePage />
               </ProtectedRoute>
             }
           />
