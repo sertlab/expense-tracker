@@ -5,13 +5,25 @@
     "lib": ["ES2022"],
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": true,
     "outDir": "./.serverless",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*", "../../node_modules/*"]
+    }
   },
-  "include": ["**/*"],
-  "exclude": ["node_modules", ".serverless", ".esbuild"]
+  "include": ["**/*.ts", "**/*.js"],
+  "exclude": ["node_modules", ".serverless", ".esbuild", "dist"],
+  "ts-node": {
+    "esm": false,
+    "experimentalSpecifierResolution": "node"
+  }
 }

@@ -6,15 +6,21 @@
   "targets": {
     "deploy": {
       "executor": "nx:run-commands",
-      "options": { "cwd": "stacks/identity-access-management", "command": "serverless deploy" }
+      "options": { 
+        "cwd": "stacks/identity-access-management", 
+        "command": "npx serverless deploy",
+        "env": {
+          "NODE_OPTIONS": "--loader ts-node/esm"
+        }
+      }
     },
     "remove": {
       "executor": "nx:run-commands",
-      "options": { "cwd": "stacks/identity-access-management", "command": "serverless remove" }
+      "options": { "cwd": "stacks/identity-access-management", "command": "npx serverless remove" }
     },
     "info": {
       "executor": "nx:run-commands",
-      "options": { "cwd": "stacks/identity-access-management", "command": "serverless info" }
+      "options": { "cwd": "stacks/identity-access-management", "command": "npx serverless info" }
     }
   },
   "tags": ["stack", "iam", "cognito", "auth"]
