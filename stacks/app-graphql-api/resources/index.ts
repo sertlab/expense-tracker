@@ -180,9 +180,7 @@ const resources: AWS['resources'] = {
                     {
                       'Fn::GetAtt': ['DeleteExpenseLambdaFunction', 'Arn'],
                     },
-                    {
-                      'Fn::GetAtt': ['FindExpensesByDateLambdaFunction', 'Arn'],
-                    },
+
                   ],
                 },
               ],
@@ -480,41 +478,7 @@ const resources: AWS['resources'] = {
       },
     },
 
-    // Data Source for findExpense Lambda
-    FindExpenseDataSource: {
-      Type: 'AWS::AppSync::DataSource',
-      Properties: {
-        ApiId: {
-          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
-        },
-        Name: 'FindExpenseDataSource',
-        Type: 'AWS_LAMBDA',
-        ServiceRoleArn: {
-          'Fn::GetAtt': ['AppSyncLambdaRole', 'Arn'],
-        },
-        LambdaConfig: {
-          LambdaFunctionArn: {
-            'Fn::GetAtt': ['FindExpensesByDateLambdaFunction', 'Arn'],
-          },
-        },
-      },
-    },
 
-    // Resolver for Query.findExpensesByDate
-    FindExpensesByDateResolver: {
-      Type: 'AWS::AppSync::Resolver',
-      DependsOn: ['GraphQLSchema'],
-      Properties: {
-        ApiId: {
-          'Fn::GetAtt': ['GraphQLApi', 'ApiId'],
-        },
-        TypeName: 'Query',
-        FieldName: 'findExpensesByDate',
-        DataSourceName: {
-          'Fn::GetAtt': ['FindExpenseDataSource', 'Name'],
-        },
-      },
-    },
   },
   Outputs: {
     GraphQLEndpoint: {

@@ -43,9 +43,9 @@ interface Expense {
  * Handler for finding expenses by userId and date
  * Uses the expenseId format YYYY-MM-DD#<uuid> to find all expenses for a specific date
  */
-export async function handler(event: {
+export const main = async (event: {
   arguments: FindExpensesByDateInput;
-}): Promise<Expense[]> {
+}): Promise<Expense[]> => {
   try {
     const input = FindExpensesByDateInputSchema.parse(event.arguments);
     console.log('FindExpensesByDate request:', { userId: input.userId, date: input.date });
@@ -79,4 +79,4 @@ export async function handler(event: {
     });
     throw error;
   }
-}
+};

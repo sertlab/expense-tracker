@@ -1,9 +1,8 @@
-import type { AWS } from '@serverless/typescript';
+import { handlerPath } from '@libs/handler-resolver';
 
-const findExpensesByDate: AWS['functions'] = {
+export default {
   findExpensesByDate: {
-    handler: 'src/functions/find-expenses-by-date/index.main',
+    handler: `${handlerPath(__dirname)}/src/functions/find-expenses-by-date/handler.main`,
+    events: [],
   },
 };
-
-export default findExpensesByDate;

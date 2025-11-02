@@ -1,1 +1,6 @@
-export { handler as main } from './handler';
+import { handlerPath } from '@libs/handler-resolver';
+
+export default {
+  handler: `${handlerPath(__dirname)}/handler.main`,
+  events: [],
+};

@@ -64,8 +64,3 @@ export interface GetExpenseInput {
   userId: string;
   expenseId: string;
 }
-
-export interface FindExpensesByDateInput {
-  userId: string;
-  date: string;
-}

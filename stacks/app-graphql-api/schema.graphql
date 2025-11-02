@@ -60,7 +60,6 @@ type Query {
   expensesByMonth(userId: ID!, month: String!): [Expense!]!
   allExpensesByMonth(month: String!): [Expense!]!
   getExpense(userId: ID!, expenseId: ID!): Expense
-  findExpensesByDate(userId: ID!, date: String!): [Expense!]!
   getUserProfile(userId: ID!): User
 }
 
