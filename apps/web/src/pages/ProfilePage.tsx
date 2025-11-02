@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { request } from '../api/graphql';
-import { getUserId } from '../auth/cognito';
+import { useAuth } from '../auth/AuthContext';
 
 const profileSchema = z.object({
   firstName: z.string().optional(),
@@ -74,9 +74,10 @@ export default function ProfilePage() {
     resolver: zodResolver(profileSchema),
   });
 
+  const { userId } = useAuth();
+
   useEffect(() => {
     const fetchProfile = async () => {
-      const userId = getUserId();
       if (!userId) {
         setLoading(false);
         return;
@@ -109,7 +110,6 @@ export default function ProfilePage() {
   }, [reset]);
 
   const onSubmit = async (data: ProfileFormData) => {
-    const userId = getUserId();
     if (!userId) {
       alert('User not authenticated');
       return;

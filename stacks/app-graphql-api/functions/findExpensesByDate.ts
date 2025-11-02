@@ -1,8 +1,8 @@
-import { handlerPath } from '@libs/handler-resolver';
+import { handlerPath } from '../src/libs/handler-resolver';
 
 export default {
   findExpensesByDate: {
-    handler: `${handlerPath(__dirname)}/src/functions/find-expenses-by-date/handler.main`,
+    handler: `${handlerPath(__dirname)}/src/functions/find-expenses-by-date/handler.handler`,
     events: [],
   },
 };

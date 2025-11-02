@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { request } from '../api/graphql';
-import { getUserId } from '../auth/cognito';
+import { useAuth } from '../auth/AuthContext';
 
 const addExpenseSchema = z.object({
   amount: z
-    .number({ required_error: 'Amount is required' })
+    .number({ message: 'Amount is required' })
     .positive('Amount must be positive')
     .max(999999.99, 'Amount too large'),
   category: z.string().min(1, 'Category is required'),
@@ -48,8 +48,9 @@ export default function AddExpensePage() {
     },
   });
 
+  const { userId } = useAuth();
+
   const onSubmit = async (data: AddExpenseFormData) => {
-    const userId = getUserId();
     if (!userId) {
       alert('User not authenticated');
       return;

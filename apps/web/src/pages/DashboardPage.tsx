@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { request } from '../api/graphql';
-import { getUserId } from '../auth/cognito';
+import { useAuth } from '../auth/AuthContext';
 
 interface User {
   userId: string;
@@ -76,9 +76,10 @@ export default function DashboardPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null); // null means "All Users"
 
+  const { userId } = useAuth();
+
   useEffect(() => {
     const fetchData = async () => {
-      const userId = getUserId();
       if (!userId) {
         setError('User not authenticated');
         setLoading(false);
@@ -178,7 +179,7 @@ export default function DashboardPage() {
 
   // Handle delete
   const handleDelete = async (expenseId: string, expenseUserId: string) => {
-    const currentUserId = getUserId();
+    const currentUserId = userId;
 
     // Only allow deleting own expenses
     if (currentUserId !== expenseUserId) {
@@ -208,7 +209,7 @@ export default function DashboardPage() {
 
   // Check if current user can edit/delete the expense
   const canManageExpense = (expenseUserId: string) => {
-    const currentUserId = getUserId();
+    const currentUserId = userId;
     return currentUserId === expenseUserId;
   };
 

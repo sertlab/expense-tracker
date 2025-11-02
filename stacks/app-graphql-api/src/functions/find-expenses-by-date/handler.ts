@@ -9,7 +9,7 @@ const TABLE_NAME = process.env.TABLE_NAME || 'expenses-dev';
 
 const FindExpensesByDateInputSchema = z.object({
   userId: z.string().min(1, 'userId is required'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be in YYYY-MM-DD format'),
+  date: z.string().min(1, 'date is required'), // Expected format: YYYY-MM-DD
 });
 
 type FindExpensesByDateInput = z.infer<typeof FindExpensesByDateInputSchema>;
@@ -41,17 +41,17 @@ interface Expense {
 
 /**
  * Handler for finding expenses by userId and date
- * Uses the expenseId format YYYY-MM-DD#<uuid> to find all expenses for a specific date
+ * Uses begins_with on expenseId to find expenses for a specific date
  */
-export const main = async (event: {
+export async function handler(event: {
   arguments: FindExpensesByDateInput;
-}): Promise<Expense[]> => {
+}): Promise<Expense[]> {
   try {
     const input = FindExpensesByDateInputSchema.parse(event.arguments);
     console.log('FindExpensesByDate request:', { userId: input.userId, date: input.date });
 
-    // Query expenses using begins_with on the sort key (expenseId)
-    // ExpenseId format is YYYY-MM-DD#<uuid>, so we can search by date prefix
+    // Query expenses for the user where expenseId begins with the date
+    // This assumes expenseId format includes date prefix (e.g., "2024-01-15_uuid")
     const result = await docClient.send(
       new QueryCommand({
         TableName: TABLE_NAME,
@@ -64,7 +64,7 @@ export const main = async (event: {
     );
 
     const expenses = (result.Items || []) as Expense[];
-    console.log('Found expenses:', { count: expenses.length, date: input.date });
+    console.log('Found expenses:', { count: expenses.length, userId: input.userId, date: input.date });
     
     return expenses;
   } catch (error) {
@@ -79,4 +79,4 @@ export const main = async (event: {
     });
     throw error;
   }
-};
+}

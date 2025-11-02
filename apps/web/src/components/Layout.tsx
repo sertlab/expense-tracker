@@ -1,8 +1,14 @@
 import { Link, Outlet } from 'react-router-dom';
-import { isSignedIn, signOut } from '../auth/cognito';
+import { signOut } from '../auth/cognito';
+import { useAuth } from '../auth/AuthContext';
 
 export default function Layout() {
-  const signedIn = isSignedIn();
+  const { isAuthenticated, refreshAuth } = useAuth();
+
+  const handleSignOut = () => {
+    signOut();
+    refreshAuth(); // Refresh auth state after sign out
+  };
 
   return (
     <div>
@@ -21,7 +27,7 @@ export default function Layout() {
           <Link to="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
             Expense Tracker
           </Link>
-          {signedIn && (
+          {isAuthenticated && (
             <>
               <Link to="/dashboard" style={{ color: 'white', textDecoration: 'none' }}>
                 Dashboard
@@ -37,11 +43,11 @@ export default function Layout() {
         </div>
 
         <div>
-          {signedIn ? (
+          {isAuthenticated ? (
             <span style={{ color: 'white' }}>
               Signed in •{' '}
               <button
-                onClick={signOut}
+                onClick={handleSignOut}
                 style={{
                   backgroundColor: 'transparent',
                   color: 'white',

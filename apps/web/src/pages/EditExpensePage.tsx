@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { request } from '../api/graphql';
-import { getUserId } from '../auth/cognito';
+import { useAuth } from '../auth/AuthContext';
 
 const editExpenseSchema = z.object({
   amount: z
@@ -63,9 +63,10 @@ export default function EditExpensePage() {
     resolver: zodResolver(editExpenseSchema),
   });
 
+  const { userId } = useAuth();
+
   useEffect(() => {
     const fetchExpense = async () => {
-      const userId = getUserId();
       if (!userId || !expenseId) {
         navigate('/dashboard');
         return;
@@ -115,7 +116,6 @@ export default function EditExpensePage() {
   }, [expenseId, navigate, setValue]);
 
   const onSubmit = async (data: EditExpenseFormData) => {
-    const userId = getUserId();
     if (!userId || !expenseId) {
       alert('User not authenticated');
       return;
