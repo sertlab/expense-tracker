@@ -415,7 +415,13 @@ export default function DashboardPage() {
                     {canManageExpense(expense.userId) ? (
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                         <button
-                          onClick={() => navigate(`/edit/${expense.expenseId}`)}
+                          onClick={() => {
+                            console.log('Edit button clicked for expense:', {
+                              expenseId: expense.expenseId,
+                              userId: expense.userId
+                            });
+                            navigate(`/edit/${encodeURIComponent(expense.expenseId)}`);
+                          }}
                           style={{
                             padding: '0.375rem 0.75rem',
                             backgroundColor: '#3b82f6',

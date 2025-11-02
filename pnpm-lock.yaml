@@ -124,7 +124,14 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@24.9.1)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@22.1.0)(terser@5.44.0)(yaml@2.8.1)
 
-  apps/web: {}
+  apps/web:
+    dependencies:
+      '@hookform/resolvers':
+        specifier: ^5.2.2
+        version: 5.2.2(react-hook-form@7.65.0(react@19.2.0))
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
 
   apps/web-e2e: {}
 

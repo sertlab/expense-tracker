@@ -24,6 +24,7 @@ input UpdateExpenseInput {
   userId: ID!
   expenseId: ID!
   amountMinor: Int
+  currency: String
   category: String
   note: String
   occurredAt: String
@@ -59,6 +60,7 @@ type Query {
   expensesByMonth(userId: ID!, month: String!): [Expense!]!
   allExpensesByMonth(month: String!): [Expense!]!
   getExpense(userId: ID!, expenseId: ID!): Expense
+  findExpensesByDate(userId: ID!, date: String!): [Expense!]!
   getUserProfile(userId: ID!): User
 }
 

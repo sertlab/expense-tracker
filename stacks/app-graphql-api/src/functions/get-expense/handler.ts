@@ -14,6 +14,18 @@ const GetExpenseInputSchema = z.object({
 
 type GetExpenseInput = z.infer<typeof GetExpenseInputSchema>;
 
+interface User {
+  userId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  address?: string;
+  phone?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Expense {
   expenseId: string;
   userId: string;
@@ -24,6 +36,7 @@ interface Expense {
   occurredAt: string;
   monthKey: string;
   createdAt: string;
+  user?: User;
 }
 
 /**
@@ -34,7 +47,7 @@ export async function handler(event: {
 }): Promise<Expense | null> {
   try {
     const input = GetExpenseInputSchema.parse(event.arguments);
-
+    console.log('GetExpense request:', { userId: input.userId, expenseId: input.expenseId });
     // Get expense from DynamoDB
     const result = await docClient.send(
       new GetCommand({
@@ -47,14 +60,18 @@ export async function handler(event: {
     );
 
     if (!result.Item) {
+      console.log('Expense not found:', { userId: input.userId, expenseId: input.expenseId });
       return null;
     }
 
+    console.log('Expense retrieved successfully:', { expenseId: result.Item.expenseId });
     return result.Item as Expense;
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Validation error:', { issues: error.issues, input: event.arguments });
       throw new Error(`Validation error: ${JSON.stringify(error.issues)}`);
     }
+    console.error('GetExpense error:', { error: error instanceof Error ? error.message : String(error), userId: event.arguments?.userId });
     throw error;
   }
 }

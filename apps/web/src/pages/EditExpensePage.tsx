@@ -8,12 +8,13 @@ import { getUserId } from '../auth/cognito';
 
 const editExpenseSchema = z.object({
   amount: z
-    .number({ required_error: 'Amount is required' })
+    .number({ message: 'Amount is required' })
     .positive('Amount must be positive')
     .max(999999.99, 'Amount too large'),
   category: z.string().min(1, 'Category is required'),
   date: z.string().min(1, 'Date is required'),
   note: z.string().optional(),
+  currency: z.string().min(3, 'Currency is required').max(3, 'Currency must be 3 characters'),
 });
 
 type EditExpenseFormData = z.infer<typeof editExpenseSchema>;
@@ -38,6 +39,7 @@ const UPDATE_EXPENSE_MUTATION = `
       expenseId
       userId
       amountMinor
+      currency
       category
       note
       occurredAt
@@ -47,7 +49,8 @@ const UPDATE_EXPENSE_MUTATION = `
 
 export default function EditExpensePage() {
   const navigate = useNavigate();
-  const { expenseId } = useParams<{ expenseId: string }>();
+  const { expenseId: rawExpenseId } = useParams<{ expenseId: string }>();
+  const expenseId = rawExpenseId ? decodeURIComponent(rawExpenseId) : undefined;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -70,20 +73,24 @@ export default function EditExpensePage() {
 
       try {
         // Fetch the expense directly by userId and expenseId
+        console.log('Fetching expense with:', { userId, expenseId });
         const result = await request<{ getExpense: any | null }>(
           GET_EXPENSE_QUERY,
           { userId, expenseId }
         );
 
+        console.log('Got result:', result);
         const expense = result.getExpense;
 
         if (!expense) {
-          alert('Expense not found');
+          console.warn('Expense not found:', { userId, expenseId });
+          alert('Expense not found. It may have been deleted or you may not have permission to view it.');
           navigate('/dashboard');
           return;
         }
 
         if (expense.userId !== userId) {
+          console.warn('Unauthorized expense access attempt:', { userId, expenseUserId: expense.userId });
           alert('You can only edit your own expenses');
           navigate('/dashboard');
           return;
@@ -94,6 +101,7 @@ export default function EditExpensePage() {
         setValue('category', expense.category);
         setValue('date', expense.occurredAt.split('T')[0]);
         setValue('note', expense.note || '');
+        setValue('currency', expense.currency);
       } catch (error) {
         console.error('Error fetching expense:', error);
         alert('Failed to load expense');
@@ -127,6 +135,7 @@ export default function EditExpensePage() {
           userId,
           expenseId,
           amountMinor,
+          currency: data.currency.toUpperCase(),
           category: data.category,
           note: data.note || undefined,
           occurredAt,
@@ -160,29 +169,56 @@ export default function EditExpensePage() {
         onSubmit={handleSubmit(onSubmit)}
         style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
       >
-        <div>
-          <label htmlFor="amount" style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Amount (£)
-          </label>
-          <input
-            id="amount"
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            {...register('amount', { valueAsNumber: true })}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              fontSize: '1rem',
-              border: errors.amount ? '1px solid red' : '1px solid #ccc',
-              borderRadius: '4px',
-            }}
-          />
-          {errors.amount && (
-            <span style={{ color: 'red', fontSize: '0.875rem' }}>
-              {errors.amount.message}
-            </span>
-          )}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 2 }}>
+            <label htmlFor="amount" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Amount
+            </label>
+            <input
+              id="amount"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              {...register('amount', { valueAsNumber: true })}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: errors.amount ? '1px solid red' : '1px solid #ccc',
+                borderRadius: '4px',
+              }}
+            />
+            {errors.amount && (
+              <span style={{ color: 'red', fontSize: '0.875rem' }}>
+                {errors.amount.message}
+              </span>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <label htmlFor="currency" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Currency
+            </label>
+            <input
+              id="currency"
+              type="text"
+              placeholder="GBP"
+              maxLength={3}
+              {...register('currency')}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: errors.currency ? '1px solid red' : '1px solid #ccc',
+                borderRadius: '4px',
+                textTransform: 'uppercase',
+              }}
+            />
+            {errors.currency && (
+              <span style={{ color: 'red', fontSize: '0.875rem' }}>
+                {errors.currency.message}
+              </span>
+            )}
+          </div>
         </div>
 
         <div>
