@@ -8,13 +8,37 @@
       "executor": "nx:run-commands",
       "options": { "cwd": "stacks/app-graphql-api", "command": "serverless deploy" }
     },
+    "deploy:dev": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless deploy --stage dev" }
+    },
+    "deploy:prod": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless deploy --stage production" }
+    },
     "remove": {
       "executor": "nx:run-commands",
       "options": { "cwd": "stacks/app-graphql-api", "command": "serverless remove" }
     },
+    "remove:dev": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless remove --stage dev" }
+    },
+    "remove:prod": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless remove --stage production" }
+    },
     "info": {
       "executor": "nx:run-commands",
       "options": { "cwd": "stacks/app-graphql-api", "command": "serverless info" }
+    },
+    "info:dev": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless info --stage dev" }
+    },
+    "info:prod": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/app-graphql-api", "command": "serverless info --stage production" }
     }
   },
   "tags": ["stack", "api", "graphql", "appsync"]

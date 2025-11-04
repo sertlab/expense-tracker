@@ -1,6 +1,14 @@
 import type { AWS } from '@serverless/typescript';
 
 const cognitoResources: AWS['resources'] = {
+  Conditions: {
+    IsProduction: {
+      'Fn::Equals': [
+        '${sls:stage}',
+        'production'
+      ]
+    }
+  },
   Resources: {
     // Cognito User Pool
     UserPool: {
@@ -89,11 +97,13 @@ const cognitoResources: AWS['resources'] = {
           'http://localhost:4200/auth/callback',
           'http://localhost:3000/auth/callback',
           'https://localhost:4200/auth/callback',
+          'https://expense-tracker-production-red.vercel.app/auth/callback',
         ],
         LogoutURLs: [
           'http://localhost:4200',
           'http://localhost:3000',
           'https://localhost:4200',
+          'https://expense-tracker-production-red.vercel.app',
         ],
         PreventUserExistenceErrors: 'ENABLED',
       },

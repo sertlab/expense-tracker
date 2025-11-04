@@ -11,13 +11,43 @@
         "command": "serverless deploy"
       }
     },
+    "deploy:dev": {
+      "executor": "nx:run-commands",
+      "options": { 
+        "cwd": "stacks/identity-access-management", 
+        "command": "serverless deploy --stage dev"
+      }
+    },
+    "deploy:prod": {
+      "executor": "nx:run-commands",
+      "options": { 
+        "cwd": "stacks/identity-access-management", 
+        "command": "serverless deploy --stage production"
+      }
+    },
     "remove": {
       "executor": "nx:run-commands",
       "options": { "cwd": "stacks/identity-access-management", "command": "serverless remove" }
     },
+    "remove:dev": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless remove --stage dev" }
+    },
+    "remove:prod": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless remove --stage production" }
+    },
     "info": {
       "executor": "nx:run-commands",
       "options": { "cwd": "stacks/identity-access-management", "command": "serverless info" }
+    },
+    "info:dev": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless info --stage dev" }
+    },
+    "info:prod": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "stacks/identity-access-management", "command": "serverless info --stage production" }
     }
   },
   "tags": ["stack", "iam", "cognito", "auth"]

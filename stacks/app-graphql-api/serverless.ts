@@ -7,6 +7,7 @@ import updateExpense from './functions/updateExpense';
 import getUserProfile from './functions/getUserProfile';
 import updateUserProfile from './functions/updateUserProfile';
 import deleteExpense from './functions/deleteExpense';
+
 import resources from './resources';
 import iamRoleStatements from './iam/permissions';
 
@@ -49,7 +50,7 @@ const config: AWS = {
   custom: {
     esbuild: {
       bundle: true,
-      minify: false,
+      minify: true,
       sourcemap: true,
       exclude: ['@aws-sdk/*'],
       target: 'node20',
