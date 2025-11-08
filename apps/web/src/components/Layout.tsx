@@ -1,9 +1,10 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { signOut } from '../auth/cognito';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Layout() {
   const { isAuthenticated, refreshAuth } = useAuth();
+  const location = useLocation();
 
   const handleSignOut = () => {
     signOut();
@@ -24,9 +25,6 @@ export default function Layout() {
         }}
       >
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <Link to="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-            Expense Tracker
-          </Link>
           {isAuthenticated && (
             <>
               <Link to="/dashboard" style={{ color: 'white', textDecoration: 'none' }}>
@@ -61,7 +59,7 @@ export default function Layout() {
                 Sign out
               </button>
             </span>
-          ) : (
+          ) : location.pathname !== '/login' ? (
             <Link
               to="/login"
               style={{
@@ -74,7 +72,7 @@ export default function Layout() {
             >
               Sign in
             </Link>
-          )}
+          ) : null}
         </div>
       </nav>
 
