@@ -129,6 +129,40 @@
                 "arn:aws:iam::aws:policy/AdministratorAccess"
               ]
             }
+          },
+          "GitHubActionsRoleProduction": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "RoleName": "GitHubActionsDeployRole-production",
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Federated": {
+                        "Fn::GetAtt": [
+                          "GitHubOIDCProvider",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    "Action": "sts:AssumeRoleWithWebIdentity",
+                    "Condition": {
+                      "StringEquals": {
+                        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                      },
+                      "StringLike": {
+                        "token.actions.githubusercontent.com:sub": "repo:sertlab/expense-tracker:ref:refs/heads/main"
+                      }
+                    }
+                  }
+                ]
+              },
+              "ManagedPolicyArns": [
+                "arn:aws:iam::aws:policy/AdministratorAccess"
+              ]
+            }
           }
         },
         "Outputs": {
@@ -141,7 +175,7 @@
             }
           },
           "GitHubActionsRoleArn": {
-            "Description": "ARN of the GitHub Actions IAM Role",
+            "Description": "ARN of the GitHub Actions IAM Role for Dev",
             "Value": {
               "Fn::GetAtt": [
                 "GitHubActionsRole",
@@ -150,6 +184,18 @@
             },
             "Export": {
               "Name": "expense-tracker-github-actions-role-arn-dev"
+            }
+          },
+          "GitHubActionsRoleArnProduction": {
+            "Description": "ARN of the GitHub Actions IAM Role for Production",
+            "Value": {
+              "Fn::GetAtt": [
+                "GitHubActionsRoleProduction",
+                "Arn"
+              ]
+            },
+            "Export": {
+              "Name": "expense-tracker-github-actions-role-arn-production"
             }
           }
         }
@@ -287,11 +333,45 @@
               "arn:aws:iam::aws:policy/AdministratorAccess"
             ]
           }
+        },
+        "GitHubActionsRoleProduction": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "RoleName": "GitHubActionsDeployRole-production",
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Federated": {
+                      "Fn::GetAtt": [
+                        "GitHubOIDCProvider",
+                        "Arn"
+                      ]
+                    }
+                  },
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Condition": {
+                    "StringEquals": {
+                      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                    },
+                    "StringLike": {
+                      "token.actions.githubusercontent.com:sub": "repo:sertlab/expense-tracker:ref:refs/heads/main"
+                    }
+                  }
+                }
+              ]
+            },
+            "ManagedPolicyArns": [
+              "arn:aws:iam::aws:policy/AdministratorAccess"
+            ]
+          }
         }
       },
       "Outputs": {
         "GitHubActionsRoleArn": {
-          "Description": "ARN of the GitHub Actions IAM Role",
+          "Description": "ARN of the GitHub Actions IAM Role for Dev",
           "Value": {
             "Fn::GetAtt": [
               "GitHubActionsRole",
@@ -300,6 +380,18 @@
           },
           "Export": {
             "Name": "expense-tracker-github-actions-role-arn-dev"
+          }
+        },
+        "GitHubActionsRoleArnProduction": {
+          "Description": "ARN of the GitHub Actions IAM Role for Production",
+          "Value": {
+            "Fn::GetAtt": [
+              "GitHubActionsRoleProduction",
+              "Arn"
+            ]
+          },
+          "Export": {
+            "Name": "expense-tracker-github-actions-role-arn-production"
           }
         }
       }
@@ -320,7 +412,7 @@
     "isDashboardMonitoringPreconfigured": false
   },
   "package": {
-    "artifactDirectoryName": "serverless/expense-tracker-github-oidc/dev/1761475659485-2025-10-26T10:47:39.485Z",
+    "artifactDirectoryName": "serverless/expense-tracker-github-oidc/dev/1762625333144-2025-11-08T18:08:53.144Z",
     "artifact": ""
   }
 }

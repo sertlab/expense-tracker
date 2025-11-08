@@ -25,11 +25,11 @@ const config: AWS = {
         },
       },
 
-      // IAM Role for GitHub Actions
+      // IAM Role for GitHub Actions - Dev (existing)
       GitHubActionsRole: {
         Type: 'AWS::IAM::Role',
         Properties: {
-          RoleName: 'GitHubActionsDeployRole-${sls:stage}',
+          RoleName: 'GitHubActionsDeployRole-dev',
           AssumeRolePolicyDocument: {
             Version: '2012-10-17',
             Statement: [
@@ -58,16 +58,59 @@ const config: AWS = {
           ],
         },
       },
+
+      // IAM Role for GitHub Actions - Production
+      GitHubActionsRoleProduction: {
+        Type: 'AWS::IAM::Role',
+        Properties: {
+          RoleName: 'GitHubActionsDeployRole-production',
+          AssumeRolePolicyDocument: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Principal: {
+                  Federated: {
+                    'Fn::GetAtt': ['GitHubOIDCProvider', 'Arn'],
+                  },
+                },
+                Action: 'sts:AssumeRoleWithWebIdentity',
+                Condition: {
+                  StringEquals: {
+                    'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+                  },
+                  StringLike: {
+                    'token.actions.githubusercontent.com:sub':
+                      'repo:sertlab/expense-tracker:ref:refs/heads/main',
+                  },
+                },
+              },
+            ],
+          },
+          ManagedPolicyArns: [
+            'arn:aws:iam::aws:policy/AdministratorAccess',
+          ],
+        },
+      },
     },
 
     Outputs: {
       GitHubActionsRoleArn: {
-        Description: 'ARN of the GitHub Actions IAM Role',
+        Description: 'ARN of the GitHub Actions IAM Role for Dev',
         Value: {
           'Fn::GetAtt': ['GitHubActionsRole', 'Arn'],
         },
         Export: {
           Name: 'expense-tracker-github-actions-role-arn-${sls:stage}',
+        },
+      },
+      GitHubActionsRoleArnProduction: {
+        Description: 'ARN of the GitHub Actions IAM Role for Production',
+        Value: {
+          'Fn::GetAtt': ['GitHubActionsRoleProduction', 'Arn'],
+        },
+        Export: {
+          Name: 'expense-tracker-github-actions-role-arn-production',
         },
       },
     },
