@@ -15,7 +15,7 @@ type GetUserProfileInput = z.infer<typeof GetUserProfileInputSchema>;
 
 interface User {
   userId: string;
-  email: string;
+  email?: string;
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
@@ -30,7 +30,7 @@ interface User {
  */
 export async function handler(event: {
   arguments: GetUserProfileInput;
-  identity: { sub: string; claims: { email: string } };
+  identity: { sub: string; claims?: { email?: string } };
 }): Promise<User | null> {
   try {
     const input = GetUserProfileInputSchema.parse(event.arguments);
@@ -46,11 +46,11 @@ export async function handler(event: {
     );
 
     if (!result.Item) {
-      // User doesn't exist, create a new profile with email from Cognito
+      // User doesn't exist, create a new profile with email from Cognito (if available)
       const now = new Date().toISOString();
       const newUser: User = {
         userId: input.userId,
-        email: event.identity.claims.email,
+        email: event.identity?.claims?.email || undefined,
         createdAt: now,
         updatedAt: now,
       };
