@@ -37,7 +37,7 @@ input DeleteExpenseInput {
 
 type User {
   userId: ID!
-  email: String!
+  email: String
   firstName: String
   lastName: String
   dateOfBirth: String
