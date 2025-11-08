@@ -28,7 +28,7 @@ export default function LoginPage() {
           marginTop: '2rem',
         }}
       >
-        Sign in with Cognito
+        Sign in
       </button>
     </div>
   );
