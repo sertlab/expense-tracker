@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { request } from '../api/graphql';
 import { useAuth } from '../auth/AuthContext';
+import toast from 'react-hot-toast';
 
 interface User {
   userId: string;
@@ -74,6 +75,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null); // null means "All Users"
 
   const { userId } = useAuth();
@@ -183,30 +185,40 @@ export default function DashboardPage() {
 
     // Only allow deleting own expenses
     if (currentUserId !== expenseUserId) {
-      alert('You can only delete your own expenses');
-      return;
-    }
-
-    if (!confirm('Are you sure you want to delete this expense?')) {
+      toast.error('You can only delete your own expenses');
       return;
     }
 
     setDeletingId(expenseId);
     try {
-      await request(DELETE_EXPENSE_MUTATION, {
-        input: { userId: expenseUserId, expenseId },
-      });
+      // Create a delay promise for minimum duration
+      const delay = new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      // Execute delete request and delay in parallel, wait for both
+      await toast.promise(
+        Promise.all([
+          request(DELETE_EXPENSE_MUTATION, {
+            input: { userId: expenseUserId, expenseId }
+          }),
+          delay
+        ]),
+        {
+          loading: 'Deleting...',
+          success: 'Expense deleted successfully',
+          error: (err) => `Failed to delete expense: ${(err as Error).message}`
+        }
+      );
 
       // Remove from local state
       setAllExpenses((prev) => prev.filter((e) => e.expenseId !== expenseId));
     } catch (err) {
       console.error('Error deleting expense:', err);
-      alert(`Failed to delete expense: ${(err as Error).message}`);
+      toast.error(`Failed to delete expense: ${(err as Error).message}`);
     } finally {
       setDeletingId(null);
     }
   };
-
+  
   // Check if current user can edit/delete the expense
   const canManageExpense = (expenseUserId: string) => {
     const currentUserId = userId;
@@ -434,21 +446,55 @@ export default function DashboardPage() {
                         >
                           Edit
                         </button>
-                        <button
-                          onClick={() => handleDelete(expense.expenseId, expense.userId)}
-                          disabled={deletingId === expense.expenseId}
-                          style={{
-                            padding: '0.375rem 0.75rem',
-                            backgroundColor: '#dc2626',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: deletingId === expense.expenseId ? 'not-allowed' : 'pointer',
-                            opacity: deletingId === expense.expenseId ? 0.6 : 1,
-                          }}
-                        >
-                          {deletingId === expense.expenseId ? 'Deleting...' : 'Delete'}
-                        </button>
+                        {confirmingDelete === expense.expenseId ? (
+                          // Show confirmation buttons
+                          <>
+                            <button
+                              onClick={() => handleDelete(expense.expenseId, expense.userId)}
+                              disabled={deletingId === expense.expenseId}
+                              style={{
+                                padding: '0.375rem 0.5rem',
+                                backgroundColor: '#dc2626',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem'
+                              }}
+                            >
+                              {deletingId === expense.expenseId ? 'Deleting...' : 'Confirm'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmingDelete(null)}
+                              style={{
+                                padding: '0.375rem 0.5rem',
+                                backgroundColor: '#6b7280',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          // Show normal delete button
+                          <button
+                            onClick={() => setConfirmingDelete(expense.expenseId)}
+                            style={{
+                              padding: '0.375rem 0.75rem',
+                              backgroundColor: '#dc2626',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>-</span>

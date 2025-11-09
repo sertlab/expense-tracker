@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { request } from '../api/graphql';
 import { useAuth } from '../auth/AuthContext';
+import toast from 'react-hot-toast';
 
 const addExpenseSchema = z.object({
   amount: z
@@ -52,7 +53,7 @@ export default function AddExpensePage() {
 
   const onSubmit = async (data: AddExpenseFormData) => {
     if (!userId) {
-      alert('User not authenticated');
+      toast.error('User not authenticated');
       return;
     }
 
@@ -61,26 +62,36 @@ export default function AddExpensePage() {
     try {
       // Convert amount (£ decimal) to amountMinor (pence)
       const amountMinor = Math.round(data.amount * 100);
+      const delay = new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Convert date to ISO occurredAt
       const occurredAt = new Date(data.date).toISOString();
 
-      await request(CREATE_EXPENSE_MUTATION, {
-        input: {
-          userId,
-          amountMinor,
-          currency: 'GBP',
-          category: data.category,
-          note: data.note || undefined,
-          occurredAt,
-        },
-      });
+      await toast.promise(
+        Promise.all([
+          request(CREATE_EXPENSE_MUTATION, {
+            input: {
+              userId,
+              amountMinor,
+              currency: 'GBP',
+              category: data.category,
+              note: data.note || undefined,
+              occurredAt,
+            },
+          }),
+          delay,
+        ]),
+        {
+          loading: 'Creating expense...',
+          success: 'Expense created!',
+          error: 'Failed to create expense',
+        }
+      );
 
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error creating expense:', error);
-      alert('Failed to create expense: ' + (error as Error).message);
+      toast.error('Failed to create expense: ' + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
