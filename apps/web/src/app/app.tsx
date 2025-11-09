@@ -9,11 +9,17 @@ import EditExpensePage from '../pages/EditExpensePage';
 import ProfilePage from '../pages/ProfilePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Wait for auth to finish loading
+  if (isLoading) {
+    return <div style={{ padding: '2rem' }}>Loading...</div>;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 }
 
