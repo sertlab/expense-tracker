@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { request } from '../api/graphql';
 import { useAuth } from '../auth/AuthContext';
+import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
   firstName: z.string().optional(),
@@ -111,16 +112,15 @@ export default function ProfilePage() {
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!userId) {
-      alert('User not authenticated');
+      toast.error('User not authenticated');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const result = await request<{ updateUserProfile: User }>(
-        UPDATE_USER_PROFILE_MUTATION,
-        {
+      const result = await toast.promise(
+        request<{ updateUserProfile: User }>(UPDATE_USER_PROFILE_MUTATION, {
           input: {
             userId,
             firstName: data.firstName || undefined,
@@ -129,6 +129,12 @@ export default function ProfilePage() {
             address: data.address || undefined,
             phone: data.phone || undefined,
           },
+          delay: 2000
+        }),
+        {
+          loading: 'Updating profile...',
+          success: 'Profile updated successfully!',
+          error: 'Failed to update profile',
         }
       );
 
@@ -139,7 +145,7 @@ export default function ProfilePage() {
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile: ' + (error as Error).message);
+      toast.error('Failed to update profile: ' + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }

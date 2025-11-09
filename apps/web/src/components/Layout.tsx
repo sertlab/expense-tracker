@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { signOut } from '../auth/cognito';
 import { useAuth } from '../auth/AuthContext';
+import { Toaster } from 'react-hot-toast';
 
 export default function Layout() {
   const { isAuthenticated, refreshAuth } = useAuth();
@@ -13,6 +14,7 @@ export default function Layout() {
 
   return (
     <div>
+      <Toaster/>
       {/* Navbar */}
       <nav
         style={{

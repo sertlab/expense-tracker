@@ -5,6 +5,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   userId: string | null;
   refreshAuth: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -12,14 +13,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const refreshAuth = () => {
     const authenticated = checkIsSignedIn();
     const currentUserId = getStoredUserId();
-    
+
     setIsAuthenticated(authenticated);
     setUserId(currentUserId);
-    
+    setIsLoading(false);
+
     console.log('Auth state refreshed:', { authenticated, userId: currentUserId });
   };
 
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userId, refreshAuth }}>
+    <AuthContext.Provider value={{ isAuthenticated, userId, refreshAuth, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
