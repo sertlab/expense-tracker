@@ -2,6 +2,7 @@
   "name": "@expense-tracker/source",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {},
   "private": true,
   "devDependencies": {
@@ -43,6 +44,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.65.0",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.9.4",
     "zod": "^4.1.12"
   }

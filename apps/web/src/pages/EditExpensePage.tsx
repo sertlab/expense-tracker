@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { request } from '../api/graphql';
 import { useAuth } from '../auth/AuthContext';
+import toast from 'react-hot-toast';
 
 const editExpenseSchema = z.object({
   amount: z
@@ -85,14 +86,14 @@ export default function EditExpensePage() {
 
         if (!expense) {
           console.warn('Expense not found:', { userId, expenseId });
-          alert('Expense not found. It may have been deleted or you may not have permission to view it.');
+          toast.error('Expense not found. It may have been deleted or you may not have permission to view it.');
           navigate('/dashboard');
           return;
         }
 
         if (expense.userId !== userId) {
           console.warn('Unauthorized expense access attempt:', { userId, expenseUserId: expense.userId });
-          alert('You can only edit your own expenses');
+          toast.error('You can only edit your own expenses');
           navigate('/dashboard');
           return;
         }
@@ -105,7 +106,7 @@ export default function EditExpensePage() {
         setValue('currency', expense.currency);
       } catch (error) {
         console.error('Error fetching expense:', error);
-        alert('Failed to load expense');
+        toast.error('Failed to load expense');
         navigate('/dashboard');
       } finally {
         setLoading(false);
@@ -117,7 +118,7 @@ export default function EditExpensePage() {
 
   const onSubmit = async (data: EditExpenseFormData) => {
     if (!userId || !expenseId) {
-      alert('User not authenticated');
+      toast.error('User not authenticated');
       return;
     }
 
@@ -130,23 +131,30 @@ export default function EditExpensePage() {
       // Convert date to ISO occurredAt
       const occurredAt = new Date(data.date).toISOString();
 
-      await request(UPDATE_EXPENSE_MUTATION, {
-        input: {
-          userId,
-          expenseId,
-          amountMinor,
-          currency: data.currency.toUpperCase(),
-          category: data.category,
-          note: data.note || undefined,
-          occurredAt,
-        },
-      });
-
+      await toast.promise(
+        request(UPDATE_EXPENSE_MUTATION, {
+          input: {
+            userId,
+            expenseId,
+            amountMinor,
+            currency: data.currency.toUpperCase(),
+            category: data.category,
+            note: data.note || undefined,
+            occurredAt,
+          },
+          delay: 1000
+        }),
+        {
+          loading: 'Updating expense...',
+          success: 'Expense updated successfully',
+          error: 'Failed to update expense',
+        }
+      );
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
       console.error('Error updating expense:', error);
-      alert('Failed to update expense: ' + (error as Error).message);
+      toast.error('Failed to update expense: ' + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
